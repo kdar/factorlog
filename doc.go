@@ -21,7 +21,7 @@
 //   log.V(1).Print("Will print")
 //   log.V(3).Print("Will not print")
 //
-// If you care about performance, you can set for verbosity this way:
+// If you care about performance, you can test for verbosity this way:
 //   if log.IsV(1) {
 //     log.Print("Hello there!")
 //   }
