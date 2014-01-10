@@ -2,7 +2,6 @@ package factorlog
 
 import (
 	"bytes"
-	"github.com/ngmoco/timber"
 	"log"
 	"testing"
 )
@@ -69,58 +68,6 @@ func BenchmarkFactorLogBuffer(b *testing.B) {
 	l := New(buf, "%d %t %f:%s: %M")
 	b.ResetTimer()
 	for x := 0; x < b.N; x++ {
-		l.Print("hey")
+		l.Info("hey")
 	}
 }
-
-type BufWriter struct {
-	b []byte
-}
-
-func (c *BufWriter) LogWrite(msg string) {
-	c.b = append(c.b, msg...)
-}
-
-func (c *BufWriter) Close() {
-	// Nothing
-}
-
-func BenchmarkTimberLogBuffer(b *testing.B) {
-	tim := timber.NewTimber()
-	timbuffer := &BufWriter{}
-	formatter := timber.NewPatFormatter("%d %t %s: %M")
-	tim.AddLogger(timber.ConfigLogger{LogWriter: timbuffer,
-		Level:     timber.FINEST,
-		Formatter: formatter})
-	b.ResetTimer()
-	for x := 0; x < b.N; x++ {
-		tim.Print("hey")
-	}
-}
-
-// func BenchmarkVerbosity2(b *testing.B) {
-// 	buf := &bytes.Buffer{}
-// 	l := New(buf, "%d %t %f:%s: %M")
-// 	l.SetVerbosity(4)
-// 	for x := 0; x < b.N; x++ {
-// 		// if l.V2(2).True {
-// 		// 	buf.Reset()
-// 		// 	//l.Info("hey")
-// 		// }
-// 		l.V2(2).Trace("hey")
-// 	}
-// }
-
-// func BenchmarkVerbosity(b *testing.B) {
-// 	buf := &bytes.Buffer{}
-// 	std.out = buf
-// 	l := New(buf, "%d %t %f:%s: %M")
-// 	l.SetVerbosity(4)
-// 	for x := 0; x < b.N; x++ {
-// 		// if l.V(2) {
-// 		// 	buf.Reset()
-// 		// 	//l.Info("hey")
-// 		// }
-// 		l.V(2).Trace("hey")
-// 	}
-// }
