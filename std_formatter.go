@@ -205,25 +205,25 @@ func (f *StdFormatter) Format(context LogContext) []byte {
 			buf.WriteString(LcShortestSeverityStrings[context.Severity])
 		case vDate:
 			year, month, day := context.Time.Date()
-			nDigits(&f.tmp, 4, 0, year)
+			NDigits(&f.tmp, 4, 0, year)
 			f.tmp[4] = '-'
-			twoDigits(&f.tmp, 5, int(month))
+			TwoDigits(&f.tmp, 5, int(month))
 			f.tmp[7] = '-'
-			twoDigits(&f.tmp, 8, day)
+			TwoDigits(&f.tmp, 8, day)
 			buf.Write(f.tmp[:10])
 		case vTime:
 			hour, min, sec := context.Time.Clock()
-			twoDigits(&f.tmp, 0, hour)
+			TwoDigits(&f.tmp, 0, hour)
 			f.tmp[2] = ':'
-			twoDigits(&f.tmp, 3, min)
+			TwoDigits(&f.tmp, 3, min)
 			f.tmp[5] = ':'
-			twoDigits(&f.tmp, 6, sec)
+			TwoDigits(&f.tmp, 6, sec)
 			buf.Write(f.tmp[:8])
 		case vUnix:
-			n := i64toa(&f.tmp, 0, context.Time.Unix())
+			n := I64toa(&f.tmp, 0, context.Time.Unix())
 			buf.Write(f.tmp[:n])
 		case vUnixNano:
-			n := i64toa(&f.tmp, 0, context.Time.UnixNano())
+			n := I64toa(&f.tmp, 0, context.Time.UnixNano())
 			buf.Write(f.tmp[:n])
 		case vFullFile:
 			buf.WriteString(context.File)
@@ -249,7 +249,7 @@ func (f *StdFormatter) Format(context LogContext) []byte {
 
 			buf.WriteString(file)
 		case vLine:
-			n := itoa(&f.tmp, 0, context.Line)
+			n := Itoa(&f.tmp, 0, context.Line)
 			buf.Write(f.tmp[:n])
 		case vFullFunction:
 			buf.WriteString(context.Function)
@@ -297,7 +297,7 @@ func (f *StdFormatter) Format(context LogContext) []byte {
 				if int(c) < 32 {
 					f.tmp[0] = '\\'
 					f.tmp[1] = 'x'
-					twoDigits(&f.tmp, 2, int(c))
+					TwoDigits(&f.tmp, 2, int(c))
 					f.stmp = append(f.stmp, f.tmp[:4]...)
 				} else {
 					f.stmp = append(f.stmp, byte(c))

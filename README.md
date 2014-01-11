@@ -24,7 +24,7 @@ I really like [glog](https://github.com/golang/glog), but I don't like that it t
 
 I also didn't want a library that read options from a configuration file. You could easily handle that yourself if you wanted to. FactorLog doesn't include any code for logging to different backends (files, syslog, etc...). The reason for this is I was structuring this after [http://12factor.net/](http://12factor.net/). There are many programs out there that can parse your log output from stdout/stderr and redirect it to the appropriate place. However, FactorLog doesn't prevent you from writing this code yourself.
 
-## Example
+## Examples
 
 You can use the API provided by the package itself just like Go's log does:
 

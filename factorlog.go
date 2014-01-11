@@ -65,6 +65,7 @@ type Logger interface {
 	Panicln(v ...interface{})
 }
 
+// Level is the level of verbosity.
 type Level int32
 
 func (l *Level) get() Level {
@@ -75,6 +76,8 @@ func (l *Level) set(val Level) {
 	atomic.StoreInt32((*int32)(l), int32(val))
 }
 
+// FactorLog is a logging object that outputs data to an io.Writer.
+// Each write is threadsafe.
 type FactorLog struct {
 	mu        sync.Mutex // ensures atomic writes; protects the following fields
 	out       io.Writer  // destination for output
@@ -171,74 +174,92 @@ func (l *FactorLog) V(level Level) Verbose {
 	return Verbose{false, l}
 }
 
+// Trace is equivalent to Print with severity TRACE.
 func (l *FactorLog) Trace(v ...interface{}) {
 	l.Output(TRACE, 2, fmt.Sprint(v...))
 }
 
+// Tracef is equivalent to Printf with severity TRACE.
 func (l *FactorLog) Tracef(format string, v ...interface{}) {
 	l.Output(TRACE, 2, fmt.Sprintf(format, v...))
 }
 
+// Traceln is equivalent to Println with severity TRACE.
 func (l *FactorLog) Traceln(v ...interface{}) {
 	l.Output(TRACE, 2, fmt.Sprint(v...))
 }
 
+// Debug is equivalent to Print with severity DEBUG.
 func (l *FactorLog) Debug(v ...interface{}) {
 	l.Output(DEBUG, 2, fmt.Sprint(v...))
 }
 
+// Debugf is equivalent to Printf with severity DEBUG.
 func (l *FactorLog) Debugf(format string, v ...interface{}) {
 	l.Output(DEBUG, 2, fmt.Sprintf(format, v...))
 }
 
+// Debugln is equivalent to Println with severity DEBUG.
 func (l *FactorLog) Debugln(v ...interface{}) {
 	l.Output(DEBUG, 2, fmt.Sprint(v...))
 }
 
+// Info is equivalent to Print with severity INFO.
 func (l *FactorLog) Info(v ...interface{}) {
 	l.Output(INFO, 2, fmt.Sprint(v...))
 }
 
+// Infof is equivalent to Printf with severity INFO.
 func (l *FactorLog) Infof(format string, v ...interface{}) {
 	l.Output(INFO, 2, fmt.Sprintf(format, v...))
 }
 
+// Infoln is equivalent to Println with severity INFO.
 func (l *FactorLog) Infoln(v ...interface{}) {
 	l.Output(INFO, 2, fmt.Sprint(v...))
 }
 
+// Warn is equivalent to Print with severity WARN.
 func (l *FactorLog) Warn(v ...interface{}) {
 	l.Output(WARN, 2, fmt.Sprint(v...))
 }
 
+// Warnf is equivalent to Printf with severity WARN.
 func (l *FactorLog) Warnf(format string, v ...interface{}) {
 	l.Output(WARN, 2, fmt.Sprintf(format, v...))
 }
 
+// Warnln is equivalent to Println with severity WARN.
 func (l *FactorLog) Warnln(v ...interface{}) {
 	l.Output(WARN, 2, fmt.Sprint(v...))
 }
 
+// Error is equivalent to Print with severity ERROR.
 func (l *FactorLog) Error(v ...interface{}) {
 	l.Output(ERROR, 2, fmt.Sprint(v...))
 }
 
+// Errorf is equivalent to Printf with severity ERROR.
 func (l *FactorLog) Errorf(format string, v ...interface{}) {
 	l.Output(ERROR, 2, fmt.Sprintf(format, v...))
 }
 
+// Errorln is equivalent to Println with severity ERROR.
 func (l *FactorLog) Errorln(v ...interface{}) {
 	l.Output(ERROR, 2, fmt.Sprint(v...))
 }
 
+// Critical is equivalent to Print with severity CRITICAL.
 func (l *FactorLog) Critical(v ...interface{}) {
 	l.Output(CRITICAL, 2, fmt.Sprint(v...))
 }
 
+// Criticalf is equivalent to Printf with severity CRITICAL.
 func (l *FactorLog) Criticalf(format string, v ...interface{}) {
 	l.Output(CRITICAL, 2, fmt.Sprintf(format, v...))
 }
 
+// Criticalln is equivalent to Println with severity CRITICAL.
 func (l *FactorLog) Criticalln(v ...interface{}) {
 	l.Output(CRITICAL, 2, fmt.Sprint(v...))
 }
@@ -247,40 +268,41 @@ func (l *FactorLog) Criticalln(v ...interface{}) {
 // trace to the configured writer.
 func (l *FactorLog) Stack(v ...interface{}) {
 	l.Output(STACK, 2, fmt.Sprint(v...))
-	l.out.Write(stacks(true))
+	l.out.Write(GetStack(true))
 }
 
 // Stackf is equivalent to Printf() followed by printing a stack
 // trace to the configured writer.
 func (l *FactorLog) Stackf(format string, v ...interface{}) {
 	l.Output(STACK, 2, fmt.Sprintf(format, v...))
-	l.out.Write(stacks(true))
+	l.out.Write(GetStack(true))
 }
 
 // Stackln is equivalent to Println() followed by printing a stack
 // trace to the configured writer.
 func (l *FactorLog) Stackln(v ...interface{}) {
 	l.Output(STACK, 2, fmt.Sprint(v...))
-	l.out.Write(stacks(true))
+	l.out.Write(GetStack(true))
 }
 
+// Log calls l.Output to print to the logger. Uses fmt.Sprint.
 func (l *FactorLog) Log(sev Severity, v ...interface{}) {
 	l.Output(sev, 2, fmt.Sprint(v...))
 }
 
-// Print uses fmt.Sprint to output to the log.
+// Print calls l.Output to print to the logger. Uses fmt.Sprint.
 func (l *FactorLog) Print(v ...interface{}) {
 	l.Output(DEBUG, 2, fmt.Sprint(v...))
 }
 
-// Print uses fmt.Sprintf to output to the log.
+// Print calls l.Output to print to the logger. Uses fmt.Sprintf.
 func (l *FactorLog) Printf(format string, v ...interface{}) {
 	l.Output(DEBUG, 2, fmt.Sprintf(format, v...))
 }
 
-// Print uses fmt.Sprint to output to the log. This is more
-// of a convienience function. If you really want to output
-// an extra newline at the end, just append \n.
+// Println calls l.Output to print to the logger. Uses fmt.Sprint.
+// This is more of a convenience function. If you really want
+// to output an extra newline at the end, just append \n.
 func (l *FactorLog) Println(v ...interface{}) {
 	l.Output(DEBUG, 2, fmt.Sprint(v...))
 }
@@ -443,21 +465,21 @@ func (b Verbose) Criticalln(v ...interface{}) {
 func (b Verbose) Stack(v ...interface{}) {
 	if b.True {
 		b.logger.Output(STACK, 2, fmt.Sprint(v...))
-		b.logger.out.Write(stacks(true))
+		b.logger.out.Write(GetStack(true))
 	}
 }
 
 func (b Verbose) Stackf(format string, v ...interface{}) {
 	if b.True {
 		b.logger.Output(STACK, 2, fmt.Sprintf(format, v...))
-		b.logger.out.Write(stacks(true))
+		b.logger.out.Write(GetStack(true))
 	}
 }
 
 func (b Verbose) Stackln(v ...interface{}) {
 	if b.True {
 		b.logger.Output(STACK, 2, fmt.Sprint(v...))
-		b.logger.out.Write(stacks(true))
+		b.logger.out.Write(GetStack(true))
 	}
 }
 
@@ -634,17 +656,17 @@ func Criticalln(v ...interface{}) {
 
 func Stack(v ...interface{}) {
 	std.Output(STACK, 2, fmt.Sprint(v...))
-	std.out.Write(stacks(true))
+	std.out.Write(GetStack(true))
 }
 
 func Stackf(format string, v ...interface{}) {
 	std.Output(STACK, 2, fmt.Sprintf(format, v...))
-	std.out.Write(stacks(true))
+	std.out.Write(GetStack(true))
 }
 
 func Stackln(v ...interface{}) {
 	std.Output(STACK, 2, fmt.Sprint(v...))
-	std.out.Write(stacks(true))
+	std.out.Write(GetStack(true))
 }
 
 func Log(sev Severity, v ...interface{}) {

@@ -46,23 +46,23 @@ func (f *GlogFormatter) Format(context LogContext) []byte {
 	_, month, day := context.Time.Date()
 	hour, minute, second := context.Time.Clock()
 	f.tmp[0] = UcShortestSeverityStrings[context.Severity][0]
-	twoDigits(&f.tmp, 1, int(month))
-	twoDigits(&f.tmp, 3, day)
+	TwoDigits(&f.tmp, 1, int(month))
+	TwoDigits(&f.tmp, 3, day)
 	f.tmp[5] = ' '
-	twoDigits(&f.tmp, 6, hour)
+	TwoDigits(&f.tmp, 6, hour)
 	f.tmp[8] = ':'
-	twoDigits(&f.tmp, 9, minute)
+	TwoDigits(&f.tmp, 9, minute)
 	f.tmp[11] = ':'
-	twoDigits(&f.tmp, 12, second)
+	TwoDigits(&f.tmp, 12, second)
 	f.tmp[14] = '.'
-	nDigits(&f.tmp, 6, 15, context.Time.Nanosecond()/1000)
+	NDigits(&f.tmp, 6, 15, context.Time.Nanosecond()/1000)
 	f.tmp[21] = ' '
-	nDigits(&f.tmp, 5, 22, context.Pid)
+	NDigits(&f.tmp, 5, 22, context.Pid)
 	f.tmp[27] = ' '
 	res.Write(f.tmp[:28])
 	res.WriteString(file)
 	f.tmp[0] = ':'
-	n := itoa(&f.tmp, 1, context.Line)
+	n := Itoa(&f.tmp, 1, context.Line)
 	f.tmp[n+1] = ']'
 	f.tmp[n+2] = ' '
 	res.Write(f.tmp[:n+3])

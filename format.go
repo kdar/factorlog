@@ -133,9 +133,9 @@ type LogContext struct {
 	Pid      int
 }
 
-// stacks returns a stack trace from the runtime
+// GetStack returns a stack trace from the runtime
 // if all is true, all goroutines are included
-func stacks(all bool) []byte {
+func GetStack(all bool) []byte {
 	n := 10000
 	if all {
 		n = 100000
@@ -156,7 +156,7 @@ const digits = "0123456789"
 
 // twoDigits converts an integer d to its ascii representation
 // i is the destination index in buf
-func twoDigits(buf *[]byte, i, d int) {
+func TwoDigits(buf *[]byte, i, d int) {
 	(*buf)[i+1] = digits[d%10]
 	d /= 10
 	(*buf)[i] = digits[d%10]
@@ -165,7 +165,7 @@ func twoDigits(buf *[]byte, i, d int) {
 // nDigits converts an integer d to its ascii representation
 // n is how many digits to use
 // i is the destination index in buf
-func nDigits(buf *[]byte, n, i, d int) {
+func NDigits(buf *[]byte, n, i, d int) {
 	// reverse order
 	for j := n - 1; j >= 0; j-- {
 		(*buf)[i+j] = digits[d%10]
@@ -182,7 +182,7 @@ const ddigits = `0001020304050607080910111213141516171819` +
 // itoa converts an integer d to its ascii representation
 // i is the deintation index in buf
 // algorithm from https://www.facebook.com/notes/facebook-engineering/three-optimization-tips-for-c/10151361643253920
-func itoa(buf *[]byte, i, d int) int {
+func Itoa(buf *[]byte, i, d int) int {
 	j := len(*buf)
 
 	for d >= 100 {
@@ -210,7 +210,8 @@ func itoa(buf *[]byte, i, d int) int {
 	return copy((*buf)[i:], (*buf)[j:])
 }
 
-func i64toa(buf *[]byte, i int, d int64) int {
+// I64toa is the same as itoa but for 64bit integers
+func I64toa(buf *[]byte, i int, d int64) int {
 	j := len(*buf)
 
 	for d >= 100 {

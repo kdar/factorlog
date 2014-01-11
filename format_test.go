@@ -35,17 +35,17 @@ func BenchmarkLangItoa(b *testing.B) {
 	var buf []byte
 	tmp := make([]byte, 64)
 	for x := 0; x < b.N; x++ {
-		itoa(&tmp, 0, 3456)
+		Itoa(&tmp, 0, 3456)
 		buf = append(buf, tmp...)
 		buf = []byte{}
 	}
 }
 
-func BenchmarkLangNdigits(b *testing.B) {
+func BenchmarkLangNDigits(b *testing.B) {
 	var buf []byte
 	tmp := make([]byte, 64)
 	for x := 0; x < b.N; x++ {
-		nDigits(&tmp, 4, 0, 3456)
+		NDigits(&tmp, 4, 0, 3456)
 		buf = append(buf, tmp...)
 		buf = []byte{}
 	}
