@@ -10,13 +10,13 @@
 // Setting your own format:
 //   import os
 //   import "github.com/kdar/factorlog"
-//   log := factorlog.New(os.Stdout, "%T %f:%s %M"
+//   log := factorlog.New(os.Stdout, factorlog.NewStdFormatter("%{Date} %{Time} %{File}:%{Line} %{Message}"))
 //   log.Print("Hello there!")
 //
 // Setting the verbosity and testing against it:
 //   import os
 //   import "github.com/kdar/factorlog"
-//   log := factorlog.New(os.Stdout, "%T %f:%s %M"
+//   log := factorlog.New(os.Stdout, factorlog.NewStdFormatter("%{Date} %{Time} %{File}:%{Line} %{Message}"))
 //   log.SetVerbosity(2)
 //   log.V(1).Print("Will print")
 //   log.V(3).Print("Will not print")
@@ -27,18 +27,43 @@
 //   }
 //
 // Format verbs:
-//   %T - Time: 15:04:05.000000
-//   %t - Time: 15:04:05
-//   %D - Date: 2006-01-02
-//   %d - Date: 2006/01/02
-//   %L - Severity
-//   %l - Short severity
-//   %F - File name (full path)
-//   %f - Short file name
-//   %x - Extra short file name (no go suffix)
-//   %s - Source line number
-//   %M - Message
-//   %P - Package path and function (e.g. sql.New)
-//   %p - Function name
-//   %% - Percent sign
+//   %{SEVERITY}     - TRACE, DEBUG, INFO, WARN, ERROR, CRITICAL, STACK, FATAL, PANIC
+//   %{Severity}     - Trace, Debug, Info, Warn, Error, Critical, Stack, Fatal, Panic
+//   %{severity}     - trace, debug, info, warn, error, critical, stack, fatal, panic
+//   %{SEV}          - TRAC, DEBG, INFO, WARN, EROR, CRIT, STAK, FATL, PANC
+//   %{Sev}          - Trac, Debg, Info, Warn, Eror, Crit, Stak, Fatl, Panc
+//   %{sev}          - trac, debg, info, warn, eror, crit, stak, fatl, panc
+//   %{S}            - T, D, I, W, E, C, S, F, P
+//   %{s}            - t, d, i, w, e, c, s, f, p
+//   %{Date}         - 2006-01-02
+//   %{Time}         - 15:04:05
+//   %{Unix}         - Returns the number of seconds elapsed since January 1, 1970 UTC.
+//   %{UnixNano}     - Returns the number of nanoseconds elapsed since January 1, 1970 UTC.
+//   %{FullFile}     - Full source file path (e.g. /dev/project/file.go).
+//   %{File}         - The source file name (e.g. file.go).
+//   %{ShortFile}    - The short source file name (file without .go).
+//   %{Line}         - The source line number.
+//   %{FullFunction} - The full source function including path. (e.g. /dev/project.(*Type).Function)
+//   %{PkgFunction}  - The source package and function (e.g. project.(*Type).Function)
+//   %{Function}     - The source function name (e.g. (*Type).Function)
+//   %{Color}        - Specify a color (uses https://github.com/mgutz/ansi)
+//   %{Message}      - The message.
+//   %{SafeMessage}  - Safe message. It will escape any character below ASCII 32. This helps prevent
+//                     attacks like using 0x08 to backspace log entries.
+//
+// Example colors (see https://github.com/mgutz/ansi for more examples):
+//   %{Color red}            - red
+//   %{Color red+b}          - red bold
+//   %{Color red+B}          - red blinking
+//   %{Color red+u}          - red underline
+//   %{Color red+bh}         - red bold bright
+//   %{Color red:white}      - red on white
+//   %{Color red+b:white+h}  - red bold on white bright
+//   %{Color red+B:white+h}  - red blink on white bright
+//
+// All logging functions ending in "ln" are merely convenience functions
+// and won't actually output another newline. This allows the
+// formatters to handle a newline however they like (e.g. if you wanted to
+// make a formatter that would output a streamed format without newlines).
+//
 package factorlog
