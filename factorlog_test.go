@@ -21,17 +21,23 @@ var logTests = []struct {
 }{
 	{
 		// we can't use every verb here, because the test will fail
-		"%p-%P [%L:%l:%f:%x] %%%M%%",
+		"%{FullFunction} [%{SEVERITY}:%{SEV}:%{File}:%{ShortFile}] %%{Message}%",
 		"hello there!",
-		[]byte("github.com/kdar/factorlog-github.com/kdar/factorlog.TestLog [ERROR:EROR:factorlog_test.go:factorlog_test] %hello there!%\n"),
+		[]byte("github.com/kdar/factorlog.TestLog [ERROR:EROR:factorlog_test.go:factorlog_test] %hello there!%\n"),
+	},
+	{
+		"%{Message} %{File}",
+		"hello there!",
+		[]byte("hello there! factorlog_test.go\n"),
 	},
 }
 
 func TestLog(t *testing.T) {
 	buf := &bytes.Buffer{}
 	for _, tt := range logTests {
-		f := New(buf, tt.frmt)
-		f.Error(tt.in)
+		buf.Reset()
+		f := New(buf, NewStdFormatter(tt.frmt))
+		f.Errorln(tt.in)
 		if !bytes.Equal(tt.out, buf.Bytes()) {
 			t.Fatalf("\nexpected: %#v\ngot:      %#v", string(tt.out), buf.String())
 		}
@@ -40,7 +46,7 @@ func TestLog(t *testing.T) {
 
 func TestVerbosity(t *testing.T) {
 	buf := &bytes.Buffer{}
-	f := New(buf, "%M")
+	f := New(buf, NewStdFormatter("%{Message}"))
 	f.SetVerbosity(2)
 	f.V(3).Info("should not appear")
 	if buf.Len() > 0 {
@@ -65,7 +71,7 @@ func BenchmarkGoLogBuffer(b *testing.B) {
 
 func BenchmarkFactorLogBuffer(b *testing.B) {
 	buf := &bytes.Buffer{}
-	l := New(buf, "%d %t %f:%s: %M")
+	l := New(buf, NewStdFormatter("%{Date} %{Time} %{File}:%{Line}: %{Message}"))
 	b.ResetTimer()
 	for x := 0; x < b.N; x++ {
 		l.Info("hey")

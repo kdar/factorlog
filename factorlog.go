@@ -5,10 +5,13 @@ import (
 	"io"
 	"os"
 	"runtime"
-	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
+)
+
+var (
+	pid = 0
 )
 
 type Severity int
@@ -25,46 +28,6 @@ const (
 	FATAL
 	PANIC
 )
-
-var SeverityStrings = [...]string{"", "TRAC", "DEBG", "INFO", "WARN", "EROR", "CRIT", "STAK", "FATL", "PANC"}
-
-var LongSeverityStrings = [...]string{
-	"NONE",
-	"TRACE",
-	"DEBUG",
-	"INFO",
-	"WARN",
-	"ERROR",
-	"CRITICAL",
-	"STACK",
-	"FATAL",
-	"PANIC",
-}
-
-func SeverityFromString(l string) Severity {
-	switch l {
-	case "TRACE":
-		return TRACE
-	case "DEBUG":
-		return DEBUG
-	case "INFO":
-		return INFO
-	case "WARN":
-		return WARN
-	case "ERROR":
-		return ERROR
-	case "CRITICAL":
-		return CRITICAL
-	case "STACK":
-		return STACK
-	case "FATAL":
-		return FATAL
-	case "PANIC":
-		return PANIC
-	}
-
-	return NONE
-}
 
 type Logger interface {
 	Trace(v ...interface{})
@@ -120,12 +83,12 @@ type FactorLog struct {
 }
 
 // New creates a FactorLog with the given output and format.
-func New(out io.Writer, format string) *FactorLog {
-	return &FactorLog{out: out, formatter: NewStdFormatter(format)}
+func New(out io.Writer, formatter Formatter) *FactorLog {
+	return &FactorLog{out: out, formatter: formatter}
 }
 
 // just like Go's log.std
-var std = New(os.Stderr, "%d %t %M")
+var std = New(os.Stderr, NewStdFormatter("%d %t %M"))
 
 // Sets the verbosity level of this log. Use IsV() or V() to
 // utilize verbosity.
@@ -140,10 +103,11 @@ func (l *FactorLog) Output(sev Severity, calldepth int, s string) error {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
-	data := LogRecord{
+	context := LogContext{
 		Time:     time.Now(),
 		Severity: sev,
 		Message:  s,
+		Pid:      pid,
 	}
 
 	if l.formatter.ShouldRuntimeCaller() {
@@ -157,21 +121,17 @@ func (l *FactorLog) Output(sev Severity, calldepth int, s string) error {
 		} else {
 			me := runtime.FuncForPC(pc)
 			if me != nil {
-				data.Function = me.Name()
-				n := strings.LastIndex(data.Function, ".")
-				if n != -1 {
-					data.Package = data.Function[:n]
-				}
+				context.Function = me.Name()
 			}
 		}
 
-		data.File = file
-		data.Line = line
+		context.File = file
+		context.Line = line
 
 		l.mu.Lock()
 	}
 
-	_, err := l.out.Write(l.formatter.Format(data))
+	_, err := l.out.Write(l.formatter.Format(context))
 	return err
 }
 
@@ -220,7 +180,7 @@ func (l *FactorLog) Tracef(format string, v ...interface{}) {
 }
 
 func (l *FactorLog) Traceln(v ...interface{}) {
-	l.Output(TRACE, 2, fmt.Sprintln(v...))
+	l.Output(TRACE, 2, fmt.Sprint(v...))
 }
 
 func (l *FactorLog) Debug(v ...interface{}) {
@@ -232,7 +192,7 @@ func (l *FactorLog) Debugf(format string, v ...interface{}) {
 }
 
 func (l *FactorLog) Debugln(v ...interface{}) {
-	l.Output(DEBUG, 2, fmt.Sprintln(v...))
+	l.Output(DEBUG, 2, fmt.Sprint(v...))
 }
 
 func (l *FactorLog) Info(v ...interface{}) {
@@ -244,7 +204,7 @@ func (l *FactorLog) Infof(format string, v ...interface{}) {
 }
 
 func (l *FactorLog) Infoln(v ...interface{}) {
-	l.Output(INFO, 2, fmt.Sprintln(v...))
+	l.Output(INFO, 2, fmt.Sprint(v...))
 }
 
 func (l *FactorLog) Warn(v ...interface{}) {
@@ -256,7 +216,7 @@ func (l *FactorLog) Warnf(format string, v ...interface{}) {
 }
 
 func (l *FactorLog) Warnln(v ...interface{}) {
-	l.Output(WARN, 2, fmt.Sprintln(v...))
+	l.Output(WARN, 2, fmt.Sprint(v...))
 }
 
 func (l *FactorLog) Error(v ...interface{}) {
@@ -268,7 +228,7 @@ func (l *FactorLog) Errorf(format string, v ...interface{}) {
 }
 
 func (l *FactorLog) Errorln(v ...interface{}) {
-	l.Output(ERROR, 2, fmt.Sprintln(v...))
+	l.Output(ERROR, 2, fmt.Sprint(v...))
 }
 
 func (l *FactorLog) Critical(v ...interface{}) {
@@ -280,7 +240,7 @@ func (l *FactorLog) Criticalf(format string, v ...interface{}) {
 }
 
 func (l *FactorLog) Criticalln(v ...interface{}) {
-	l.Output(CRITICAL, 2, fmt.Sprintln(v...))
+	l.Output(CRITICAL, 2, fmt.Sprint(v...))
 }
 
 // Stack is equivalent to Print() followed by printing a stack
@@ -300,7 +260,7 @@ func (l *FactorLog) Stackf(format string, v ...interface{}) {
 // Stackln is equivalent to Println() followed by printing a stack
 // trace to the configured writer.
 func (l *FactorLog) Stackln(v ...interface{}) {
-	l.Output(STACK, 2, fmt.Sprintln(v...))
+	l.Output(STACK, 2, fmt.Sprint(v...))
 	l.out.Write(stacks(true))
 }
 
@@ -308,16 +268,21 @@ func (l *FactorLog) Log(sev Severity, v ...interface{}) {
 	l.Output(sev, 2, fmt.Sprint(v...))
 }
 
+// Print uses fmt.Sprint to output to the log.
 func (l *FactorLog) Print(v ...interface{}) {
 	l.Output(DEBUG, 2, fmt.Sprint(v...))
 }
 
+// Print uses fmt.Sprintf to output to the log.
 func (l *FactorLog) Printf(format string, v ...interface{}) {
 	l.Output(DEBUG, 2, fmt.Sprintf(format, v...))
 }
 
+// Print uses fmt.Sprint to output to the log. This is more
+// of a convienience function. If you really want to output
+// an extra newline at the end, just append \n.
 func (l *FactorLog) Println(v ...interface{}) {
-	l.Output(DEBUG, 2, fmt.Sprintln(v...))
+	l.Output(DEBUG, 2, fmt.Sprint(v...))
 }
 
 // Fatal is equivalent to Print() followed by a call to os.Exit(1).
@@ -334,7 +299,7 @@ func (l *FactorLog) Fatalf(format string, v ...interface{}) {
 
 // Fatalln is equivalent to Println() followed by a call to os.Exit(1).
 func (l *FactorLog) Fatalln(v ...interface{}) {
-	l.Output(FATAL, 2, fmt.Sprintln(v...))
+	l.Output(FATAL, 2, fmt.Sprint(v...))
 	os.Exit(1)
 }
 
@@ -354,7 +319,7 @@ func (l *FactorLog) Panicf(format string, v ...interface{}) {
 
 // Panicf is equivalent to Printf() followed by a call to panic().
 func (l *FactorLog) Panicln(v ...interface{}) {
-	s := fmt.Sprintln(v...)
+	s := fmt.Sprint(v...)
 	l.Output(PANIC, 2, s)
 	panic(s)
 }
@@ -381,7 +346,7 @@ func (b Verbose) Tracef(format string, v ...interface{}) {
 
 func (b Verbose) Traceln(v ...interface{}) {
 	if b.True {
-		b.logger.Output(TRACE, 2, fmt.Sprintln(v...))
+		b.logger.Output(TRACE, 2, fmt.Sprint(v...))
 	}
 }
 
@@ -399,7 +364,7 @@ func (b Verbose) Debugf(format string, v ...interface{}) {
 
 func (b Verbose) Debugln(v ...interface{}) {
 	if b.True {
-		b.logger.Output(DEBUG, 2, fmt.Sprintln(v...))
+		b.logger.Output(DEBUG, 2, fmt.Sprint(v...))
 	}
 }
 
@@ -417,7 +382,7 @@ func (b Verbose) Infof(format string, v ...interface{}) {
 
 func (b Verbose) Infoln(v ...interface{}) {
 	if b.True {
-		b.logger.Output(INFO, 2, fmt.Sprintln(v...))
+		b.logger.Output(INFO, 2, fmt.Sprint(v...))
 	}
 }
 
@@ -435,7 +400,7 @@ func (b Verbose) Warnf(format string, v ...interface{}) {
 
 func (b Verbose) Warnln(v ...interface{}) {
 	if b.True {
-		b.logger.Output(WARN, 2, fmt.Sprintln(v...))
+		b.logger.Output(WARN, 2, fmt.Sprint(v...))
 	}
 }
 
@@ -453,7 +418,7 @@ func (b Verbose) Errorf(format string, v ...interface{}) {
 
 func (b Verbose) Errorln(v ...interface{}) {
 	if b.True {
-		b.logger.Output(ERROR, 2, fmt.Sprintln(v...))
+		b.logger.Output(ERROR, 2, fmt.Sprint(v...))
 	}
 }
 
@@ -471,7 +436,7 @@ func (b Verbose) Criticalf(format string, v ...interface{}) {
 
 func (b Verbose) Criticalln(v ...interface{}) {
 	if b.True {
-		b.logger.Output(CRITICAL, 2, fmt.Sprintln(v...))
+		b.logger.Output(CRITICAL, 2, fmt.Sprint(v...))
 	}
 }
 
@@ -491,7 +456,7 @@ func (b Verbose) Stackf(format string, v ...interface{}) {
 
 func (b Verbose) Stackln(v ...interface{}) {
 	if b.True {
-		b.logger.Output(STACK, 2, fmt.Sprintln(v...))
+		b.logger.Output(STACK, 2, fmt.Sprint(v...))
 		b.logger.out.Write(stacks(true))
 	}
 }
@@ -516,7 +481,7 @@ func (b Verbose) Printf(format string, v ...interface{}) {
 
 func (b Verbose) Println(v ...interface{}) {
 	if b.True {
-		b.logger.Output(DEBUG, 2, fmt.Sprintln(v...))
+		b.logger.Output(DEBUG, 2, fmt.Sprint(v...))
 	}
 }
 
@@ -536,7 +501,7 @@ func (b Verbose) Fatalf(format string, v ...interface{}) {
 
 func (b Verbose) Fatalln(v ...interface{}) {
 	if b.True {
-		b.logger.Output(FATAL, 2, fmt.Sprintln(v...))
+		b.logger.Output(FATAL, 2, fmt.Sprint(v...))
 		os.Exit(1)
 	}
 }
@@ -559,7 +524,7 @@ func (b Verbose) Panicf(format string, v ...interface{}) {
 
 func (b Verbose) Panicln(v ...interface{}) {
 	if b.True {
-		s := fmt.Sprintln(v...)
+		s := fmt.Sprint(v...)
 		b.logger.Output(PANIC, 2, s)
 		panic(s)
 	}
@@ -604,7 +569,7 @@ func Tracef(format string, v ...interface{}) {
 }
 
 func Traceln(v ...interface{}) {
-	std.Output(TRACE, 2, fmt.Sprintln(v...))
+	std.Output(TRACE, 2, fmt.Sprint(v...))
 }
 
 func Debug(v ...interface{}) {
@@ -616,7 +581,7 @@ func Debugf(format string, v ...interface{}) {
 }
 
 func Debugln(v ...interface{}) {
-	std.Output(DEBUG, 2, fmt.Sprintln(v...))
+	std.Output(DEBUG, 2, fmt.Sprint(v...))
 }
 
 func Info(v ...interface{}) {
@@ -628,7 +593,7 @@ func Infof(format string, v ...interface{}) {
 }
 
 func Infoln(v ...interface{}) {
-	std.Output(INFO, 2, fmt.Sprintln(v...))
+	std.Output(INFO, 2, fmt.Sprint(v...))
 }
 
 func Warn(v ...interface{}) {
@@ -640,7 +605,7 @@ func Warnf(format string, v ...interface{}) {
 }
 
 func Warnln(v ...interface{}) {
-	std.Output(WARN, 2, fmt.Sprintln(v...))
+	std.Output(WARN, 2, fmt.Sprint(v...))
 }
 
 func Error(v ...interface{}) {
@@ -652,7 +617,7 @@ func Errorf(format string, v ...interface{}) {
 }
 
 func Errorln(v ...interface{}) {
-	std.Output(ERROR, 2, fmt.Sprintln(v...))
+	std.Output(ERROR, 2, fmt.Sprint(v...))
 }
 
 func Critical(v ...interface{}) {
@@ -664,7 +629,7 @@ func Criticalf(format string, v ...interface{}) {
 }
 
 func Criticalln(v ...interface{}) {
-	std.Output(CRITICAL, 2, fmt.Sprintln(v...))
+	std.Output(CRITICAL, 2, fmt.Sprint(v...))
 }
 
 func Stack(v ...interface{}) {
@@ -678,7 +643,7 @@ func Stackf(format string, v ...interface{}) {
 }
 
 func Stackln(v ...interface{}) {
-	std.Output(STACK, 2, fmt.Sprintln(v...))
+	std.Output(STACK, 2, fmt.Sprint(v...))
 	std.out.Write(stacks(true))
 }
 
@@ -695,7 +660,7 @@ func Printf(format string, v ...interface{}) {
 }
 
 func Println(v ...interface{}) {
-	std.Output(DEBUG, 2, fmt.Sprintln(v...))
+	std.Output(DEBUG, 2, fmt.Sprint(v...))
 }
 
 func Fatal(v ...interface{}) {
@@ -709,7 +674,7 @@ func Fatalf(format string, v ...interface{}) {
 }
 
 func Fatalln(v ...interface{}) {
-	std.Output(FATAL, 2, fmt.Sprintln(v...))
+	std.Output(FATAL, 2, fmt.Sprint(v...))
 	os.Exit(1)
 }
 
@@ -726,7 +691,11 @@ func Panicf(format string, v ...interface{}) {
 }
 
 func Panicln(v ...interface{}) {
-	s := fmt.Sprintln(v...)
+	s := fmt.Sprint(v...)
 	std.Output(PANIC, 2, s)
 	panic(s)
+}
+
+func init() {
+	pid = os.Getpid()
 }
