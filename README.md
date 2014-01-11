@@ -1,18 +1,20 @@
 FactorLog
 =========
 
-FactorLog is a logging infrastructure for Go that provides numerous logging functions for whatever your style may be. It could easily be a replacement for Go's log in the standard library (though it doesn't support functions such as `SetFlags()`).
+FactorLog is a fast logging infrastructure for Go that provides numerous logging functions for whatever your style may be. It could easily be a replacement for Go's log in the standard library (though it doesn't support functions such as `SetFlags()`).
 
 Documentation here: [http://godoc.org/github.com/kdar/factorlog](http://godoc.org/github.com/kdar/factorlog)
 
 ## Features
 
 - Various log severities: TRACE, DEBUG, INFO, WARN, ERROR, CRITICAL, STACK, FATAL, PANIC
-- Formattable logger.
-- Designed with speed in mind.
+- Configurable, formattable logger.
+- Modular formatter. Care about speed? Use GlogFormatter or roll your own.
+- Designed with speed in mind (it's really fast).
 - Many logging functions to fit your style of logging. (Trace, Tracef, Traceln, etc...)
-- Settable verbosity like [glog](https://github.com/golang/glog)
-- Used in a production system so it will get some love.
+- Supports colors.
+- Settable verbosity like [glog](https://github.com/golang/glog).
+- Used in a production system, so it will get some love.
 
 ## Motivation
 
@@ -49,10 +51,12 @@ import (
 )
 
 func main() {
-  log := factorlog.New(os.Stdout, "%D %T %f:%s %M")
+  log := factorlog.New(os.Stdout, factorlog.NewStdFormatter("%{Date} %{Time} %{File}:%{Line} %{Message}"))
   log.Println("Hello there!")
 }
 ```
+
+Check the examples/ directory for more.
 
 ## Documentation
 
