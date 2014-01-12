@@ -6,7 +6,7 @@ import (
 )
 
 var fmtTestsContext = LogContext{
-	Time:     time.Unix(0, 1389223634000123456),
+	Time:     time.Unix(0, 1389223634123456789),
 	Severity: PANIC,
 	File:     "/path/to/testing.go",
 	Line:     391,
@@ -77,13 +77,38 @@ var std2FmtTests = []struct {
 	},
 	{
 		fmtTestsContext,
+		`%{Time "15:04:05"}`,
+		"18:27:14\n",
+	},
+	{
+		fmtTestsContext,
+		`%{Time "2006/01/02"}`,
+		"2014/01/08\n",
+	},
+	{
+		fmtTestsContext,
+		`%{Time "15:04:05.000"}`,
+		"18:27:14.123\n",
+	},
+	{
+		fmtTestsContext,
+		`%{Time "15:04:05.000000"}`,
+		"18:27:14.123456\n",
+	},
+	{
+		fmtTestsContext,
+		`%{Time "15:04:05.000000000"}`,
+		"18:27:14.123456789\n",
+	},
+	{
+		fmtTestsContext,
 		"%{Unix}",
 		"1389223634\n",
 	},
 	{
 		fmtTestsContext,
 		"%{UnixNano}",
-		"1389223634000123456\n",
+		"1389223634123456789\n",
 	},
 	{
 		fmtTestsContext,
@@ -167,18 +192,28 @@ var std2FmtTests = []struct {
 	},
 	{
 		fmtTestsContext,
-		"%{Color red}",
+		`%{Color "red"}`,
 		"\x1b[31m\n",
 	},
 	{
 		fmtTestsContext,
-		"%{Color red+b:blue}",
+		`%{Color "red+b:blue"}`,
 		"\x1b[1;31;44m\n",
 	},
 	{
 		fmtTestsContext,
-		"%{Color yellow}hey%{Color reset}",
+		`%{Color "yellow"}hey%{Color "reset"}`,
 		"\x1b[33mhey\x1b[0m\n",
+	},
+	{
+		fmtTestsContext,
+		`%{Color "red" "PANIC"}`,
+		"\x1b[31m\n",
+	},
+	{
+		fmtTestsContext,
+		`%{Color "red" "INFO"}`,
+		"",
 	},
 	{
 		fmtTestsContext,
@@ -231,7 +266,7 @@ func TestStdShouldRuntimeCaller(t *testing.T) {
 func BenchmarkStdFormatter(b *testing.B) {
 	// var m runtime.MemStats
 
-	f := NewStdFormatter("[%{Date} %{Time}] [%{SEVERITY}:%{File}:%{Line}] %{Message}")
+	f := NewStdFormatter(`[%{Date} %{Time}] [%{SEVERITY}:%{File}:%{Line}] %{Message}`)
 
 	// l := len(fmtTestsContext.Message)
 	for x := 0; x < b.N; x++ {

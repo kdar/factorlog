@@ -7,7 +7,8 @@ import (
 	"regexp"
 )
 
-type fmtVerb int
+// Can hold 63 flags
+type fmtVerb uint64
 
 const (
 	vSTRING fmtVerb = 1 << iota
@@ -46,8 +47,18 @@ const (
 		vFunction)
 )
 
+const (
+	fTime_Default  = 0
+	fTime_Provided = 1 << iota
+	fTime_LogDate
+	fTime_StampMilli
+	fTime_StampMicro
+	fTime_StampNano
+)
+
 var (
-	formatRe = regexp.MustCompile(`%{([A-Za-z]+)(?:\s(.*?[^\\]))?}`)
+	formatRe = regexp.MustCompile(`%{([A-Za-z]+)(?:\s(.*?))?}`)
+	argsRe   = regexp.MustCompile(`(?:"(.*?)")`)
 	verbMap  = map[string]fmtVerb{
 		"SEVERITY":     vSEVERITY,
 		"Severity":     vSeverity,
@@ -72,20 +83,28 @@ var (
 		"Message":      vMessage,
 		"SafeMessage":  vSafeMessage,
 	}
+	timeMap = map[string]int{
+		"15:04:05":           fTime_Default,
+		"2006/01/02":         fTime_LogDate,
+		"15:04:05.000":       fTime_StampMilli,
+		"15:04:05.000000":    fTime_StampMicro,
+		"15:04:05.000000000": fTime_StampNano,
+	}
 )
+
+type part struct {
+	verb  fmtVerb
+	value string
+	args  []string
+	flags int
+}
 
 type StdFormatter struct {
 	// the original format
 	frmt string
-	// all the strings that are not verbs
-	// e.g. "hey %D there" will give us
-	// []string{"hey ", " there"}
-	strings []string
 	// a slice depicting each part of the format
 	// we build the final []byte from this
-	parts []fmtVerb
-	// a slice of layouts of verbs
-	layouts []string
+	parts []*part
 	// temporary buffer to help in formatting.
 	// initialized by newFormatter
 	tmp []byte
@@ -99,28 +118,32 @@ type StdFormatter struct {
 }
 
 // Available verbs:
-// %{SEVERITY} - TRACE, DEBUG, INFO, WARN, ERROR, CRITICAL, STACK, FATAL, PANIC
-// %{Severity} - Trace, Debug, Info, Warn, Error, Critical, Stack, Fatal, Panic
-// %{severity} - trace, debug, info, warn, error, critical, stack, fatal, panic
-// %{SEV}      - TRAC, DEBG, INFO, WARN, EROR, CRIT, STAK, FATL, PANC
-// %{Sev}      - Trac, Debg, Info, Warn, Eror, Crit, Stak, Fatl, Panc
-// %{sev}      - trac, debg, info, warn, eror, crit, stak, fatl, panc
-// %{S}        - T, D, I, W, E, C, S, F, P
-// %{s}        - t, d, i, w, e, c, s, f, p
-// %{Date}
-// %{Time}
-// %{Unix}
-// %{UnixNano}
-// %{FullFile}
-// %{File}
-// %{ShortFile}
-// %{Line}
-// %{FullFunction}
-// %{PkgFunction}
-// %{Function}
-// %{Color}
-// %{Message}
-// %{SafeMessage}
+//   %{SEVERITY} - TRACE, DEBUG, INFO, WARN, ERROR, CRITICAL, STACK, FATAL, PANIC
+//   %{Severity} - Trace, Debug, Info, Warn, Error, Critical, Stack, Fatal, Panic
+//   %{severity} - trace, debug, info, warn, error, critical, stack, fatal, panic
+//   %{SEV} - TRAC, DEBG, INFO, WARN, EROR, CRIT, STAK, FATL, PANC
+//   %{Sev} - Trac, Debg, Info, Warn, Eror, Crit, Stak, Fatl, Panc
+//   %{sev} - trac, debg, info, warn, eror, crit, stak, fatl, panc
+//   %{S} - T, D, I, W, E, C, S, F, P
+//   %{s} - t, d, i, w, e, c, s, f, p
+//   %{Date} - Shorthand for 2006-01-02
+//   %{Time} - Shorthand for 15:04:05
+//   %{Time "<fmt>"} - Specify a format (read time.Format for details).
+//                     Optimized formats: 2006/01/02, 15:04:05.000, 15:04:05.000000, 15:04:05.000000000
+//   %{Unix} - Returns the number of seconds elapsed since January 1, 1970 UTC.
+//   %{UnixNano} - Returns the number of nanoseconds elapsed since January 1, 1970 UTC.
+//   %{FullFile} - Full source file path (e.g. /dev/project/file.go).
+//   %{File} - The source file name (e.g. file.go).
+//   %{ShortFile} - The short source file name (file without .go).
+//   %{Line} - The source line number.
+//   %{FullFunction} - The full source function including path. (e.g. /dev/project.(*Type).Function)
+//   %{PkgFunction} - The source package and function (e.g. project.(*Type).Function)
+//   %{Function} - The source function name (e.g. (*Type).Function)
+//   %{Color "<fmt>"} - Specify a color (uses https://github.com/mgutz/ansi)
+//   %{Color "<fmt>" "<severity>"} - Specify a color for a given severity (e.g. %{Color "red" "ERROR"})
+//   %{Message} - The message.
+//   %{SafeMessage} - Safe message. It will escape any character below ASCII 32. This helps prevent
+//                    attacks like using 0x08 to backspace log entries.
 func NewStdFormatter(frmt string) *StdFormatter {
 	f := &StdFormatter{
 		frmt: frmt,
@@ -134,9 +157,14 @@ func NewStdFormatter(frmt string) *StdFormatter {
 		start, end := m[0], m[1]
 		verb := frmt[m[2]:m[3]]
 
-		layout := ""
+		// Try to get any arguments passed
+		var args []string
 		if m[4] != -1 {
-			layout = frmt[m[4]:m[5]]
+			allargs := frmt[m[4]:m[5]]
+			pargs := argsRe.FindAllStringSubmatch(allargs, -1)
+			for _, arg := range pargs {
+				args = append(args, arg[1])
+			}
 		}
 
 		if start > prev {
@@ -144,17 +172,50 @@ func NewStdFormatter(frmt string) *StdFormatter {
 		}
 
 		if v, ok := verbMap[verb]; ok {
-			// Colors are special and can be processed now
-			if v == vColor {
-				if layout == "reset" {
-					f.appendString(ansi.Reset)
-				} else {
-					code := ansi.ColorCode(layout)
-					f.appendString(code)
+			switch v {
+			case vColor:
+				if len(args) > 0 {
+					if args[0] == "reset" {
+						f.appendString(ansi.Reset)
+					} else {
+						code := ansi.ColorCode(args[0])
+						if len(args) == 2 {
+							// If we have two arguments, that means they
+							// specified a severity this color applies to.
+							// So we have to add the part.
+							severity := StringToSeverity(args[1])
+							f.parts = append(f.parts, &part{
+								verb:  vColor,
+								value: code,
+								flags: int(severity),
+							})
+						} else {
+							// We only got one argument so we can just append
+							// the code as a string.
+							f.appendString(code)
+						}
+					}
 				}
-			} else {
+			case vTime:
 				f.flags |= int(v)
-				f.parts = append(f.parts, v)
+				if len(args) > 0 {
+					// Some optimizations for Time
+					opt_part := &part{
+						verb: v,
+					}
+					if ftime, ok := timeMap[args[0]]; ok {
+						opt_part.flags = ftime
+						f.parts = append(f.parts, opt_part)
+					} else {
+						opt_part.flags = fTime_Provided
+						opt_part.args = args
+						f.parts = append(f.parts, opt_part)
+					}
+				} else {
+					f.appendDefault(v, args)
+				}
+			default:
+				f.appendDefault(v, args)
 			}
 		}
 
@@ -174,19 +235,27 @@ func (f *StdFormatter) ShouldRuntimeCaller() bool {
 
 func (f *StdFormatter) appendString(s string) {
 	if len(s) > 0 {
-		f.strings = append(f.strings, s)
-		f.parts = append(f.parts, vSTRING)
+		f.parts = append(f.parts, &part{
+			verb:  vSTRING,
+			value: s,
+		})
 	}
+}
+
+func (f *StdFormatter) appendDefault(verb fmtVerb, args []string) {
+	f.flags |= int(verb)
+	f.parts = append(f.parts, &part{
+		verb: verb,
+		args: args,
+	})
 }
 
 func (f *StdFormatter) Format(context LogContext) []byte {
 	buf := &bytes.Buffer{}
-	stringi := 0
 	for _, p := range f.parts {
-		switch p {
+		switch p.verb {
 		case vSTRING:
-			buf.WriteString(f.strings[stringi])
-			stringi++
+			buf.WriteString(p.value)
 		case vSEVERITY:
 			buf.WriteString(UcSeverityStrings[context.Severity])
 		case vSeverity:
@@ -212,13 +281,47 @@ func (f *StdFormatter) Format(context LogContext) []byte {
 			TwoDigits(&f.tmp, 8, day)
 			buf.Write(f.tmp[:10])
 		case vTime:
-			hour, min, sec := context.Time.Clock()
-			TwoDigits(&f.tmp, 0, hour)
-			f.tmp[2] = ':'
-			TwoDigits(&f.tmp, 3, min)
-			f.tmp[5] = ':'
-			TwoDigits(&f.tmp, 6, sec)
-			buf.Write(f.tmp[:8])
+			// Some optimization cases.
+			switch {
+			case p.flags == fTime_LogDate:
+				year, month, day := context.Time.Date()
+				NDigits(&f.tmp, 4, 0, year)
+				f.tmp[4] = '/'
+				TwoDigits(&f.tmp, 5, int(month))
+				f.tmp[7] = '/'
+				TwoDigits(&f.tmp, 8, day)
+				buf.Write(f.tmp[:10])
+			case p.flags&(fTime_StampMilli|fTime_StampMicro|fTime_StampNano) != 0:
+				hour, min, sec := context.Time.Clock()
+				TwoDigits(&f.tmp, 0, hour)
+				f.tmp[2] = ':'
+				TwoDigits(&f.tmp, 3, min)
+				f.tmp[5] = ':'
+				TwoDigits(&f.tmp, 6, sec)
+				f.tmp[8] = '.'
+				// Depending on what kind of stamp we're dealing with, we have
+				// to output the correct precision.
+				if p.flags == fTime_StampMilli {
+					NDigits(&f.tmp, 3, 9, context.Time.Nanosecond()/1000000)
+					buf.Write(f.tmp[:12])
+				} else if p.flags == fTime_StampMicro {
+					NDigits(&f.tmp, 6, 9, context.Time.Nanosecond()/1000)
+					buf.Write(f.tmp[:15])
+				} else if p.flags == fTime_StampNano {
+					NDigits(&f.tmp, 9, 9, context.Time.Nanosecond())
+					buf.Write(f.tmp[:18])
+				}
+			case p.flags == fTime_Provided:
+				buf.WriteString(context.Time.Format(p.args[0]))
+			default:
+				hour, min, sec := context.Time.Clock()
+				TwoDigits(&f.tmp, 0, hour)
+				f.tmp[2] = ':'
+				TwoDigits(&f.tmp, 3, min)
+				f.tmp[5] = ':'
+				TwoDigits(&f.tmp, 6, sec)
+				buf.Write(f.tmp[:8])
+			}
 		case vUnix:
 			n := I64toa(&f.tmp, 0, context.Time.Unix())
 			buf.Write(f.tmp[:n])
@@ -243,7 +346,7 @@ func (f *StdFormatter) Format(context LogContext) []byte {
 				}
 			}
 
-			if p == vShortFile {
+			if p.verb == vShortFile {
 				file = file[:len(file)-3]
 			}
 
@@ -281,6 +384,12 @@ func (f *StdFormatter) Format(context LogContext) []byte {
 
 			fun = fun[lastDot+1:]
 			buf.WriteString(fun)
+		case vColor:
+			// We must have args when we get here because of
+			// the parser ensuring this. No need testing for it.
+			if Severity(p.flags) == context.Severity {
+				buf.WriteString(p.value)
+			}
 		case vMessage:
 			buf.WriteString(context.Message)
 		case vSafeMessage:

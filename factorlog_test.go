@@ -60,6 +60,15 @@ func TestVerbosity(t *testing.T) {
 	}
 }
 
+// Ensure `std`'s format is correct.
+func TestStdFormat(t *testing.T) {
+	output := std.formatter.Format(fmtTestsContext)
+	expect := "2014-01-08 18:27:14 hello there!\n"
+	if string(output) != expect {
+		t.Fatalf("\nexpected: %#v\ngot:      %#v", expect, string(output))
+	}
+}
+
 func BenchmarkGoLogBuffer(b *testing.B) {
 	buf := &bytes.Buffer{}
 	l := log.New(buf, "", log.Ldate|log.Ltime|log.Lshortfile)

@@ -66,5 +66,5 @@ func (f *CustomFormatter) Format(context log.LogContext) []byte {
 
 func main() {
 	log := log.New(os.Stdout, NewCustomFormatter())
-	log.Println("Hello there!")
+	log.Println("Custom formatter")
 }

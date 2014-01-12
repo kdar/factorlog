@@ -109,6 +109,16 @@ var CapShortSeverityStrings = [...]string{
 	"Panc",
 }
 
+func StringToSeverity(s string) Severity {
+	for i, v := range UcSeverityStrings {
+		if v == s {
+			return Severity(i)
+		}
+	}
+
+	return -1
+}
+
 // Interface to format anything
 type Formatter interface {
 	// Formats LogRecord and returns the []byte that will

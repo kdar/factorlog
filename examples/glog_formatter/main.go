@@ -7,5 +7,5 @@ import (
 
 func main() {
 	log := factorlog.New(os.Stdout, factorlog.NewGlogFormatter())
-	log.Print("Hello there!\n")
+	log.Print("Glog formatter")
 }

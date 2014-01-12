@@ -91,7 +91,7 @@ func New(out io.Writer, formatter Formatter) *FactorLog {
 }
 
 // just like Go's log.std
-var std = New(os.Stderr, NewStdFormatter("%d %t %M"))
+var std = New(os.Stderr, NewStdFormatter("%{Date} %{Time} %{Message}"))
 
 // Sets the verbosity level of this log. Use IsV() or V() to
 // utilize verbosity.

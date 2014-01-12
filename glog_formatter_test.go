@@ -6,7 +6,7 @@ import (
 
 func TestGlogFormatter(t *testing.T) {
 	f := NewGlogFormatter()
-	expect := "P0108 18:27:14.000123 01234 testing.go:391] hello there!\n"
+	expect := "P0108 18:27:14.123456 01234 testing.go:391] hello there!\n"
 	out := string(f.Format(fmtTestsContext))
 	if expect != out {
 		t.Fatalf("\nexpected: %#v\ngot:      %#v", expect, out)
