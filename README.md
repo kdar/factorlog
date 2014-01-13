@@ -22,7 +22,7 @@ There are many good logging libraries out there but none of them worked the way 
 
 I really like [glog](https://github.com/golang/glog), but I don't like that it takes over your command line arguments. I may implement more of its features into FactorLog.
 
-I also didn't want a library that read options from a configuration file. You could easily handle that yourself if you wanted to. FactorLog doesn't include any code for logging to different backends (files, syslog, etc...). The reason for this is I was structuring this after [http://12factor.net/](http://12factor.net/). There are many programs out there that can parse your log output from stdout/stderr and redirect it to the appropriate place. However, FactorLog doesn't prevent you from writing this code yourself.
+I also didn't want a library that read options from a configuration file. You could easily handle that yourself if you wanted to. FactorLog doesn't include any code for logging to different backends (files, syslog, etc...). The reason for this is I was structuring this after [http://12factor.net/](http://12factor.net/). There are many programs out there that can parse your log output from stdout/stderr and redirect it to the appropriate place. However, FactorLog doesn't prevent you from writing this code yourself. I think it would be better if there was a third party library that did backend work itself. Then every logging library could benefit from it.
 
 ## Examples
 

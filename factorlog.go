@@ -721,3 +721,38 @@ func Panicln(v ...interface{}) {
 func init() {
 	pid = os.Getpid()
 }
+
+// Creates a logger that outputs to nothing
+type NullLogger struct{}
+
+func (NullLogger) Trace(v ...interface{})                    {}
+func (NullLogger) Tracef(format string, v ...interface{})    {}
+func (NullLogger) Traceln(v ...interface{})                  {}
+func (NullLogger) Debug(v ...interface{})                    {}
+func (NullLogger) Debugf(format string, v ...interface{})    {}
+func (NullLogger) Debugln(v ...interface{})                  {}
+func (NullLogger) Info(v ...interface{})                     {}
+func (NullLogger) Infof(format string, v ...interface{})     {}
+func (NullLogger) Infoln(v ...interface{})                   {}
+func (NullLogger) Warn(v ...interface{})                     {}
+func (NullLogger) Warnf(format string, v ...interface{})     {}
+func (NullLogger) Warnln(v ...interface{})                   {}
+func (NullLogger) Error(v ...interface{})                    {}
+func (NullLogger) Errorf(format string, v ...interface{})    {}
+func (NullLogger) Errorln(v ...interface{})                  {}
+func (NullLogger) Critical(v ...interface{})                 {}
+func (NullLogger) Criticalf(format string, v ...interface{}) {}
+func (NullLogger) Criticalln(v ...interface{})               {}
+func (NullLogger) Stack(v ...interface{})                    {}
+func (NullLogger) Stackf(format string, v ...interface{})    {}
+func (NullLogger) Stackln(v ...interface{})                  {}
+func (NullLogger) Log(sev Severity, v ...interface{})        {}
+func (NullLogger) Print(v ...interface{})                    {}
+func (NullLogger) Printf(format string, v ...interface{})    {}
+func (NullLogger) Println(v ...interface{})                  {}
+func (NullLogger) Fatal(v ...interface{})                    {}
+func (NullLogger) Fatalf(format string, v ...interface{})    {}
+func (NullLogger) Fatalln(v ...interface{})                  {}
+func (NullLogger) Panic(v ...interface{})                    {}
+func (NullLogger) Panicf(format string, v ...interface{})    {}
+func (NullLogger) Panicln(v ...interface{})                  {}
