@@ -5,6 +5,8 @@ FactorLog is a fast logging infrastructure for Go that provides numerous logging
 
 Documentation here: [http://godoc.org/github.com/kdar/factorlog](http://godoc.org/github.com/kdar/factorlog)
 
+![factorlog](http://puu.sh/6jPEt.png "FactorLog")
+
 ## Features
 
 - Various log severities: TRACE, DEBUG, INFO, WARN, ERROR, CRITICAL, STACK, FATAL, PANIC
