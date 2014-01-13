@@ -192,7 +192,7 @@ func (l *FactorLog) Output(sev Severity, calldepth int, s string) error {
 
 	// If severity is STACK, output the stack.
 	if sev == STACK {
-		l.out.Write(GetStack(true))
+		l.out.Write(GetStack(3))
 	}
 
 	return err

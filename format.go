@@ -1,7 +1,6 @@
 package factorlog
 
 import (
-	"runtime"
 	"time"
 )
 
@@ -157,24 +156,24 @@ type LogContext struct {
 	Pid      int
 }
 
-// GetStack returns a stack trace from the runtime
-// if all is true, all goroutines are included
-func GetStack(all bool) []byte {
-	n := 10000
-	if all {
-		n = 100000
-	}
-	var trace []byte
-	for i := 0; i < 5; i++ {
-		trace = make([]byte, n)
-		nbytes := runtime.Stack(trace, all)
-		if nbytes < len(trace) {
-			return trace[:nbytes]
-		}
-		n *= 2
-	}
-	return trace
-}
+// // GetStack returns a stack trace from the runtime
+// // if all is true, all goroutines are included
+// func GetStack(all bool) []byte {
+// 	n := 10000
+// 	if all {
+// 		n = 100000
+// 	}
+// 	var trace []byte
+// 	for i := 0; i < 5; i++ {
+// 		trace = make([]byte, n)
+// 		nbytes := runtime.Stack(trace, all)
+// 		if nbytes < len(trace) {
+// 			return trace[:nbytes]
+// 		}
+// 		n *= 2
+// 	}
+// 	return trace
+// }
 
 const digits = "0123456789"
 
