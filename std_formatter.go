@@ -257,21 +257,21 @@ func (f *StdFormatter) Format(context LogContext) []byte {
 		case vSTRING:
 			buf.WriteString(p.value)
 		case vSEVERITY:
-			buf.WriteString(UcSeverityStrings[context.Severity])
+			buf.WriteString(UcSeverityStrings[SeverityToIndex(context.Severity)])
 		case vSeverity:
-			buf.WriteString(CapSeverityStrings[context.Severity])
+			buf.WriteString(CapSeverityStrings[SeverityToIndex(context.Severity)])
 		case vseverity:
-			buf.WriteString(LcSeverityStrings[context.Severity])
+			buf.WriteString(LcSeverityStrings[SeverityToIndex(context.Severity)])
 		case vSEV:
-			buf.WriteString(UcShortSeverityStrings[context.Severity])
+			buf.WriteString(UcShortSeverityStrings[SeverityToIndex(context.Severity)])
 		case vSev:
-			buf.WriteString(CapShortSeverityStrings[context.Severity])
+			buf.WriteString(CapShortSeverityStrings[SeverityToIndex(context.Severity)])
 		case vsev:
-			buf.WriteString(LcShortSeverityStrings[context.Severity])
+			buf.WriteString(LcShortSeverityStrings[SeverityToIndex(context.Severity)])
 		case vS:
-			buf.WriteString(UcShortestSeverityStrings[context.Severity])
+			buf.WriteString(UcShortestSeverityStrings[SeverityToIndex(context.Severity)])
 		case vs:
-			buf.WriteString(LcShortestSeverityStrings[context.Severity])
+			buf.WriteString(LcShortestSeverityStrings[SeverityToIndex(context.Severity)])
 		case vDate:
 			year, month, day := context.Time.Date()
 			NDigits(&f.tmp, 4, 0, year)

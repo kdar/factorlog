@@ -14,6 +14,7 @@ Documentation here: [http://godoc.org/github.com/kdar/factorlog](http://godoc.or
 - Many logging functions to fit your style of logging. (Trace, Tracef, Traceln, etc...)
 - Supports colors.
 - Settable verbosity like [glog](https://github.com/golang/glog).
+- Filter by severity.
 - Used in a production system, so it will get some love.
 
 ## Motivation

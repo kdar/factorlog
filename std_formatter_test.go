@@ -247,7 +247,7 @@ func TestStdFormatter(t *testing.T) {
 		f := NewStdFormatter(tt.frmt)
 		out := string(f.Format(tt.context))
 		if tt.out != out {
-			t.Fatalf("\nexpected: %#v\ngot:      %#v", tt.out, out)
+			t.Fatalf("\nfor: %v\nexpected: %#v\ngot:      %#v", tt.frmt, tt.out, out)
 		}
 	}
 }

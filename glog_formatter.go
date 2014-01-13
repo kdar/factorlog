@@ -45,7 +45,7 @@ func (f *GlogFormatter) Format(context LogContext) []byte {
 
 	_, month, day := context.Time.Date()
 	hour, minute, second := context.Time.Clock()
-	f.tmp[0] = UcShortestSeverityStrings[context.Severity][0]
+	f.tmp[0] = UcShortestSeverityStrings[SeverityToIndex(context.Severity)][0]
 	TwoDigits(&f.tmp, 1, int(month))
 	TwoDigits(&f.tmp, 3, day)
 	f.tmp[5] = ' '

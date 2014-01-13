@@ -109,14 +109,28 @@ var CapShortSeverityStrings = [...]string{
 	"Panc",
 }
 
+// Convert an uppercase string to a severity.
 func StringToSeverity(s string) Severity {
-	for i, v := range UcSeverityStrings {
+	sev := Severity(1)
+	for _, v := range UcSeverityStrings {
 		if v == s {
-			return Severity(i)
+			return sev
 		}
+		sev <<= 1
 	}
 
 	return -1
+}
+
+// We use this function to convert a severity to an index
+// that we can then use to index variables like UcSeverityStrings.
+// Why don't we use maps? This is almost 3x faster.
+func SeverityToIndex(sev Severity) int {
+	count := 0
+	for ; sev > 1; count++ {
+		sev >>= 1
+	}
+	return count
 }
 
 // Interface to format anything

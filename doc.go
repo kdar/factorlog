@@ -26,6 +26,8 @@
 //     log.Print("Hello there!")
 //   }
 //
+// For more usage examples, check the examples/ directory.
+//
 // Format verbs:
 //   %{SEVERITY} - TRACE, DEBUG, INFO, WARN, ERROR, CRITICAL, STACK, FATAL, PANIC
 //   %{Severity} - Trace, Debug, Info, Warn, Error, Critical, Stack, Fatal, Panic

@@ -3,6 +3,7 @@ package factorlog
 import (
 	"fmt"
 	"io"
+	"math"
 	"os"
 	"runtime"
 	"sync"
@@ -14,10 +15,30 @@ var (
 	pid = 0
 )
 
-type Severity int
+// Level represents the level of verbosity.
+type Level int32
+
+func (l *Level) get() Level {
+	return Level(atomic.LoadInt32((*int32)(l)))
+}
+
+func (l *Level) set(val Level) {
+	atomic.StoreInt32((*int32)(l), int32(val))
+}
+
+// Severity represents the severity of the log.
+type Severity int32
+
+func (l *Severity) get() Severity {
+	return Severity(atomic.LoadInt32((*int32)(l)))
+}
+
+func (l *Severity) set(val Severity) {
+	atomic.StoreInt32((*int32)(l), int32(val))
+}
 
 const (
-	NONE Severity = iota // NONE to be used for standard go log impl's
+	NONE Severity = 1 << iota
 	TRACE
 	DEBUG
 	INFO
@@ -27,6 +48,13 @@ const (
 	STACK
 	FATAL
 	PANIC
+)
+
+var (
+	maxint32 = int32(math.Pow(2, 31)) - 1
+	//maxuint32 = uint32(math.Pow(2, 32)) - 1
+	//maxint64 = int64(math.Pow(2, 63)) - 1
+	//maxuint64 = uint64(math.Pow(2, 64)) - 1
 )
 
 type Logger interface {
@@ -65,29 +93,19 @@ type Logger interface {
 	Panicln(v ...interface{})
 }
 
-// Level is the level of verbosity.
-type Level int32
-
-func (l *Level) get() Level {
-	return Level(atomic.LoadInt32((*int32)(l)))
-}
-
-func (l *Level) set(val Level) {
-	atomic.StoreInt32((*int32)(l), int32(val))
-}
-
 // FactorLog is a logging object that outputs data to an io.Writer.
 // Each write is threadsafe.
 type FactorLog struct {
-	mu        sync.Mutex // ensures atomic writes; protects the following fields
-	out       io.Writer  // destination for output
-	formatter Formatter
-	verbosity Level
+	mu         sync.Mutex // ensures atomic writes; protects the following fields
+	out        io.Writer  // destination for output
+	formatter  Formatter
+	verbosity  Level
+	severities Severity
 }
 
 // New creates a FactorLog with the given output and format.
 func New(out io.Writer, formatter Formatter) *FactorLog {
-	return &FactorLog{out: out, formatter: formatter}
+	return &FactorLog{out: out, formatter: formatter, severities: Severity(maxint32)}
 }
 
 // just like Go's log.std
@@ -99,12 +117,48 @@ func (l *FactorLog) SetVerbosity(level Level) {
 	l.verbosity.set(level)
 }
 
+// SetSeverities sets which severities this log will output for.
+// Example:
+//   l.SetSeverities(INFO|DEBUG)
+func (l *FactorLog) SetSeverities(sev Severity) {
+	l.severities.set(sev)
+}
+
+// SetMinMaxSeverity sets the minimum and maximum severities this
+// log will output for.
+// Example:
+//   l.SetMinMaxSeverity(INFO, ERROR)
+func (l *FactorLog) SetMinMaxSeverity(min Severity, max Severity) {
+	if min > max || max < min {
+		min, max = max, min
+	}
+
+	if max > PANIC {
+		max = PANIC
+	}
+
+	if min < NONE {
+		min = NONE
+	}
+
+	sev := Severity(0)
+	for s := min; s <= max; s <<= 1 {
+		sev |= s
+	}
+
+	l.severities.set(sev)
+}
+
 // Output will write to the writer with the given severity, calldepth,
 // and string. calldepth is only used if the format requires a call to
 // runtime.Caller.
 func (l *FactorLog) Output(sev Severity, calldepth int, s string) error {
 	l.mu.Lock()
 	defer l.mu.Unlock()
+
+	if sev&l.severities.get() == 0 {
+		return nil
+	}
 
 	context := LogContext{
 		Time:     time.Now(),
@@ -135,6 +189,12 @@ func (l *FactorLog) Output(sev Severity, calldepth int, s string) error {
 	}
 
 	_, err := l.out.Write(l.formatter.Format(context))
+
+	// If severity is STACK, output the stack.
+	if sev == STACK {
+		l.out.Write(GetStack(true))
+	}
+
 	return err
 }
 
@@ -268,21 +328,18 @@ func (l *FactorLog) Criticalln(v ...interface{}) {
 // trace to the configured writer.
 func (l *FactorLog) Stack(v ...interface{}) {
 	l.Output(STACK, 2, fmt.Sprint(v...))
-	l.out.Write(GetStack(true))
 }
 
 // Stackf is equivalent to Printf() followed by printing a stack
 // trace to the configured writer.
 func (l *FactorLog) Stackf(format string, v ...interface{}) {
 	l.Output(STACK, 2, fmt.Sprintf(format, v...))
-	l.out.Write(GetStack(true))
 }
 
 // Stackln is equivalent to Println() followed by printing a stack
 // trace to the configured writer.
 func (l *FactorLog) Stackln(v ...interface{}) {
 	l.Output(STACK, 2, fmt.Sprint(v...))
-	l.out.Write(GetStack(true))
 }
 
 // Log calls l.Output to print to the logger. Uses fmt.Sprint.
@@ -465,21 +522,18 @@ func (b Verbose) Criticalln(v ...interface{}) {
 func (b Verbose) Stack(v ...interface{}) {
 	if b.True {
 		b.logger.Output(STACK, 2, fmt.Sprint(v...))
-		b.logger.out.Write(GetStack(true))
 	}
 }
 
 func (b Verbose) Stackf(format string, v ...interface{}) {
 	if b.True {
 		b.logger.Output(STACK, 2, fmt.Sprintf(format, v...))
-		b.logger.out.Write(GetStack(true))
 	}
 }
 
 func (b Verbose) Stackln(v ...interface{}) {
 	if b.True {
 		b.logger.Output(STACK, 2, fmt.Sprint(v...))
-		b.logger.out.Write(GetStack(true))
 	}
 }
 
@@ -563,7 +617,15 @@ func SetOutput(w io.Writer) {
 }
 
 func SetVerbosity(level Level) {
-	std.verbosity.set(level)
+	std.SetVerbosity(level)
+}
+
+func SetSeverities(sev Severity) {
+	std.SetSeverities(sev)
+}
+
+func SetMinMaxSeverity(min Severity, max Severity) {
+	std.SetMinMaxSeverity(min, max)
 }
 
 func IsV(level Level) bool {
@@ -656,17 +718,14 @@ func Criticalln(v ...interface{}) {
 
 func Stack(v ...interface{}) {
 	std.Output(STACK, 2, fmt.Sprint(v...))
-	std.out.Write(GetStack(true))
 }
 
 func Stackf(format string, v ...interface{}) {
 	std.Output(STACK, 2, fmt.Sprintf(format, v...))
-	std.out.Write(GetStack(true))
 }
 
 func Stackln(v ...interface{}) {
 	std.Output(STACK, 2, fmt.Sprint(v...))
-	std.out.Write(GetStack(true))
 }
 
 func Log(sev Severity, v ...interface{}) {
