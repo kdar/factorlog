@@ -3,7 +3,6 @@ package factorlog
 import (
 	"fmt"
 	"io"
-	"math"
 	"os"
 	"runtime"
 	"sync"
@@ -51,10 +50,10 @@ const (
 )
 
 var (
-	maxint32 = int32(math.Pow(2, 31)) - 1
-	//maxuint32 = uint32(math.Pow(2, 32)) - 1
-	//maxint64 = int64(math.Pow(2, 63)) - 1
-	//maxuint64 = uint64(math.Pow(2, 64)) - 1
+	maxint32 = ^uint(0) >> 1
+	//maxuint32 = ^uint(0)
+	//maxint64 = ^uint64(0) >> 1
+	//maxuint64 = ^uint64(0)
 )
 
 type Logger interface {
