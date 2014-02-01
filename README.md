@@ -64,3 +64,7 @@ Check the examples/ directory for more.
 ## Documentation
 
 [http://godoc.org/github.com/kdar/factorlog](http://godoc.org/github.com/kdar/factorlog)
+
+## API Stability
+
+I'm using this in software that is rapidly changing, so I haven't stabilized the API of this just yet.

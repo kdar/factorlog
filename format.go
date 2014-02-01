@@ -152,8 +152,9 @@ type LogContext struct {
 	File     string
 	Line     int
 	Function string
-	Message  string
 	Pid      int
+	Format   *string
+	Args     []interface{}
 }
 
 // // GetStack returns a stack trace from the runtime

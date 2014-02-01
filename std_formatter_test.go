@@ -10,7 +10,8 @@ var fmtTestsContext = LogContext{
 	Severity: PANIC,
 	File:     "/path/to/testing.go",
 	Line:     391,
-	Message:  "hello there!",
+	Format:   nil,
+	Args:     []interface{}{"hello there!"},
 	Function: "some crazy/path.path/pkg.(*Type).Function",
 	Pid:      1234,
 }
@@ -236,7 +237,7 @@ var std2FmtTests = []struct {
 		"hey2014-01-0818:27:14there\n",
 	},
 	{
-		LogContext{Message: "hey\x08\x08\x08there"},
+		LogContext{Args: []interface{}{"hey\x08\x08\x08there"}},
 		"%{SafeMessage}",
 		"hey\\x08\\x08\\x08there\n",
 	},
