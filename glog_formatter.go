@@ -2,6 +2,7 @@ package factorlog
 
 import (
 	"bytes"
+	"fmt"
 	"path/filepath"
 )
 
@@ -66,10 +67,17 @@ func (f *GlogFormatter) Format(context LogContext) []byte {
 	f.tmp[n+1] = ']'
 	f.tmp[n+2] = ' '
 	res.Write(f.tmp[:n+3])
-	res.WriteString(context.Message)
+	message := ""
+	if context.Format != nil {
+		message = fmt.Sprintf(*context.Format, context.Args...)
+	} else {
+		message = fmt.Sprint(context.Args...)
+	}
 
-	l := len(context.Message)
-	if l > 0 && context.Message[l-1] != '\n' {
+	res.WriteString(message)
+
+	l := len(message)
+	if l > 0 && message[l-1] != '\n' {
 		res.WriteRune('\n')
 	}
 

@@ -152,6 +152,10 @@ func (l *FactorLog) SetMinMaxSeverity(min Severity, max Severity) {
 // and string. calldepth is only used if the format requires a call to
 // runtime.Caller.
 func (l *FactorLog) Output(sev Severity, calldepth int, s string) error {
+	return l.output(sev, calldepth+1, nil, s)
+}
+
+func (l *FactorLog) output(sev Severity, calldepth int, format *string, v ...interface{}) error {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
@@ -162,8 +166,9 @@ func (l *FactorLog) Output(sev Severity, calldepth int, s string) error {
 	context := LogContext{
 		Time:     time.Now(),
 		Severity: sev,
-		Message:  s,
 		Pid:      pid,
+		Format:   format,
+		Args:     v,
 	}
 
 	if l.formatter.ShouldRuntimeCaller() {
@@ -235,171 +240,168 @@ func (l *FactorLog) V(level Level) Verbose {
 
 // Trace is equivalent to Print with severity TRACE.
 func (l *FactorLog) Trace(v ...interface{}) {
-	l.Output(TRACE, 2, fmt.Sprint(v...))
+	l.output(TRACE, 2, nil, v...)
 }
 
 // Tracef is equivalent to Printf with severity TRACE.
 func (l *FactorLog) Tracef(format string, v ...interface{}) {
-	l.Output(TRACE, 2, fmt.Sprintf(format, v...))
+	l.output(TRACE, 2, &format, v...)
 }
 
 // Traceln is equivalent to Println with severity TRACE.
 func (l *FactorLog) Traceln(v ...interface{}) {
-	l.Output(TRACE, 2, fmt.Sprint(v...))
+	l.output(TRACE, 2, nil, v...)
 }
 
 // Debug is equivalent to Print with severity DEBUG.
 func (l *FactorLog) Debug(v ...interface{}) {
-	l.Output(DEBUG, 2, fmt.Sprint(v...))
+	l.output(DEBUG, 2, nil, v...)
 }
 
 // Debugf is equivalent to Printf with severity DEBUG.
 func (l *FactorLog) Debugf(format string, v ...interface{}) {
-	l.Output(DEBUG, 2, fmt.Sprintf(format, v...))
+	l.output(DEBUG, 2, &format, v...)
 }
 
 // Debugln is equivalent to Println with severity DEBUG.
 func (l *FactorLog) Debugln(v ...interface{}) {
-	l.Output(DEBUG, 2, fmt.Sprint(v...))
+	l.output(DEBUG, 2, nil, v...)
 }
 
 // Info is equivalent to Print with severity INFO.
 func (l *FactorLog) Info(v ...interface{}) {
-	l.Output(INFO, 2, fmt.Sprint(v...))
+	l.output(INFO, 2, nil, v...)
 }
 
 // Infof is equivalent to Printf with severity INFO.
 func (l *FactorLog) Infof(format string, v ...interface{}) {
-	l.Output(INFO, 2, fmt.Sprintf(format, v...))
+	l.output(INFO, 2, &format, v...)
 }
 
 // Infoln is equivalent to Println with severity INFO.
 func (l *FactorLog) Infoln(v ...interface{}) {
-	l.Output(INFO, 2, fmt.Sprint(v...))
+	l.output(INFO, 2, nil, v...)
 }
 
 // Warn is equivalent to Print with severity WARN.
 func (l *FactorLog) Warn(v ...interface{}) {
-	l.Output(WARN, 2, fmt.Sprint(v...))
+	l.output(WARN, 2, nil, v...)
 }
 
 // Warnf is equivalent to Printf with severity WARN.
 func (l *FactorLog) Warnf(format string, v ...interface{}) {
-	l.Output(WARN, 2, fmt.Sprintf(format, v...))
+	l.output(WARN, 2, &format, v...)
 }
 
 // Warnln is equivalent to Println with severity WARN.
 func (l *FactorLog) Warnln(v ...interface{}) {
-	l.Output(WARN, 2, fmt.Sprint(v...))
+	l.output(WARN, 2, nil, v...)
 }
 
 // Error is equivalent to Print with severity ERROR.
 func (l *FactorLog) Error(v ...interface{}) {
-	l.Output(ERROR, 2, fmt.Sprint(v...))
+	l.output(ERROR, 2, nil, v...)
 }
 
 // Errorf is equivalent to Printf with severity ERROR.
 func (l *FactorLog) Errorf(format string, v ...interface{}) {
-	l.Output(ERROR, 2, fmt.Sprintf(format, v...))
+	l.output(ERROR, 2, &format, v...)
 }
 
 // Errorln is equivalent to Println with severity ERROR.
 func (l *FactorLog) Errorln(v ...interface{}) {
-	l.Output(ERROR, 2, fmt.Sprint(v...))
+	l.output(ERROR, 2, nil, v...)
 }
 
 // Critical is equivalent to Print with severity CRITICAL.
 func (l *FactorLog) Critical(v ...interface{}) {
-	l.Output(CRITICAL, 2, fmt.Sprint(v...))
+	l.output(CRITICAL, 2, nil, v...)
 }
 
 // Criticalf is equivalent to Printf with severity CRITICAL.
 func (l *FactorLog) Criticalf(format string, v ...interface{}) {
-	l.Output(CRITICAL, 2, fmt.Sprintf(format, v...))
+	l.output(CRITICAL, 2, &format, v...)
 }
 
 // Criticalln is equivalent to Println with severity CRITICAL.
 func (l *FactorLog) Criticalln(v ...interface{}) {
-	l.Output(CRITICAL, 2, fmt.Sprint(v...))
+	l.output(CRITICAL, 2, nil, v...)
 }
 
 // Stack is equivalent to Print() followed by printing a stack
 // trace to the configured writer.
 func (l *FactorLog) Stack(v ...interface{}) {
-	l.Output(STACK, 2, fmt.Sprint(v...))
+	l.output(STACK, 2, nil, v...)
 }
 
 // Stackf is equivalent to Printf() followed by printing a stack
 // trace to the configured writer.
 func (l *FactorLog) Stackf(format string, v ...interface{}) {
-	l.Output(STACK, 2, fmt.Sprintf(format, v...))
+	l.output(STACK, 2, &format, v...)
 }
 
 // Stackln is equivalent to Println() followed by printing a stack
 // trace to the configured writer.
 func (l *FactorLog) Stackln(v ...interface{}) {
-	l.Output(STACK, 2, fmt.Sprint(v...))
+	l.output(STACK, 2, nil, v...)
 }
 
-// Log calls l.Output to print to the logger. Uses fmt.Sprint.
+// Log calls l.output to print to the logger. Uses fmt.Sprint.
 func (l *FactorLog) Log(sev Severity, v ...interface{}) {
-	l.Output(sev, 2, fmt.Sprint(v...))
+	l.output(sev, 2, nil, v...)
 }
 
-// Print calls l.Output to print to the logger. Uses fmt.Sprint.
+// Print calls l.output to print to the logger. Uses fmt.Sprint.
 func (l *FactorLog) Print(v ...interface{}) {
-	l.Output(DEBUG, 2, fmt.Sprint(v...))
+	l.output(DEBUG, 2, nil, v...)
 }
 
-// Print calls l.Output to print to the logger. Uses fmt.Sprintf.
+// Print calls l.output to print to the logger. Uses fmt.Sprintf.
 func (l *FactorLog) Printf(format string, v ...interface{}) {
-	l.Output(DEBUG, 2, fmt.Sprintf(format, v...))
+	l.output(DEBUG, 2, &format, v...)
 }
 
-// Println calls l.Output to print to the logger. Uses fmt.Sprint.
+// Println calls l.output to print to the logger. Uses fmt.Sprint.
 // This is more of a convenience function. If you really want
 // to output an extra newline at the end, just append \n.
 func (l *FactorLog) Println(v ...interface{}) {
-	l.Output(DEBUG, 2, fmt.Sprint(v...))
+	l.output(DEBUG, 2, nil, v...)
 }
 
 // Fatal is equivalent to Print() followed by a call to os.Exit(1).
 func (l *FactorLog) Fatal(v ...interface{}) {
-	l.Output(FATAL, 2, fmt.Sprint(v...))
+	l.output(FATAL, 2, nil, v...)
 	os.Exit(1)
 }
 
 // Fatalf is equivalent to Printf() followed by a call to os.Exit(1).
 func (l *FactorLog) Fatalf(format string, v ...interface{}) {
-	l.Output(FATAL, 2, fmt.Sprintf(format, v...))
+	l.output(FATAL, 2, &format, v...)
 	os.Exit(1)
 }
 
 // Fatalln is equivalent to Println() followed by a call to os.Exit(1).
 func (l *FactorLog) Fatalln(v ...interface{}) {
-	l.Output(FATAL, 2, fmt.Sprint(v...))
+	l.output(FATAL, 2, nil, v...)
 	os.Exit(1)
 }
 
 // Panic is equivalent to Print() followed by a call to panic().
 func (l *FactorLog) Panic(v ...interface{}) {
-	s := fmt.Sprint(v...)
-	l.Output(PANIC, 2, s)
-	panic(s)
+	l.output(PANIC, 2, nil, v...)
+	panic(fmt.Sprint(v...))
 }
 
 // Panicf is equivalent to Printf() followed by a call to panic().
 func (l *FactorLog) Panicf(format string, v ...interface{}) {
-	s := fmt.Sprintf(format, v...)
-	l.Output(PANIC, 2, s)
-	panic(s)
+	l.output(PANIC, 2, &format, v...)
+	panic(fmt.Sprintf(format, v...))
 }
 
 // Panicf is equivalent to Printf() followed by a call to panic().
 func (l *FactorLog) Panicln(v ...interface{}) {
-	s := fmt.Sprint(v...)
-	l.Output(PANIC, 2, s)
-	panic(s)
+	l.output(PANIC, 2, nil, v...)
+	panic(fmt.Sprint(v...))
 }
 
 // Verbose is a structure that enables syntatic sugar
@@ -412,196 +414,193 @@ type Verbose struct {
 
 func (b Verbose) Trace(v ...interface{}) {
 	if b.True {
-		b.logger.Output(TRACE, 2, fmt.Sprint(v...))
+		b.logger.output(TRACE, 2, nil, v...)
 	}
 }
 
 func (b Verbose) Tracef(format string, v ...interface{}) {
 	if b.True {
-		b.logger.Output(TRACE, 2, fmt.Sprintf(format, v...))
+		b.logger.output(TRACE, 2, &format, v...)
 	}
 }
 
 func (b Verbose) Traceln(v ...interface{}) {
 	if b.True {
-		b.logger.Output(TRACE, 2, fmt.Sprint(v...))
+		b.logger.output(TRACE, 2, nil, v...)
 	}
 }
 
 func (b Verbose) Debug(v ...interface{}) {
 	if b.True {
-		b.logger.Output(DEBUG, 2, fmt.Sprint(v...))
+		b.logger.output(DEBUG, 2, nil, v...)
 	}
 }
 
 func (b Verbose) Debugf(format string, v ...interface{}) {
 	if b.True {
-		b.logger.Output(DEBUG, 2, fmt.Sprintf(format, v...))
+		b.logger.output(DEBUG, 2, &format, v...)
 	}
 }
 
 func (b Verbose) Debugln(v ...interface{}) {
 	if b.True {
-		b.logger.Output(DEBUG, 2, fmt.Sprint(v...))
+		b.logger.output(DEBUG, 2, nil, v...)
 	}
 }
 
 func (b Verbose) Info(v ...interface{}) {
 	if b.True {
-		b.logger.Output(INFO, 2, fmt.Sprint(v...))
+		b.logger.output(INFO, 2, nil, v...)
 	}
 }
 
 func (b Verbose) Infof(format string, v ...interface{}) {
 	if b.True {
-		b.logger.Output(INFO, 2, fmt.Sprintf(format, v...))
+		b.logger.output(INFO, 2, &format, v...)
 	}
 }
 
 func (b Verbose) Infoln(v ...interface{}) {
 	if b.True {
-		b.logger.Output(INFO, 2, fmt.Sprint(v...))
+		b.logger.output(INFO, 2, nil, v...)
 	}
 }
 
 func (b Verbose) Warn(v ...interface{}) {
 	if b.True {
-		b.logger.Output(WARN, 2, fmt.Sprint(v...))
+		b.logger.output(WARN, 2, nil, v...)
 	}
 }
 
 func (b Verbose) Warnf(format string, v ...interface{}) {
 	if b.True {
-		b.logger.Output(WARN, 2, fmt.Sprintf(format, v...))
+		b.logger.output(WARN, 2, &format, v...)
 	}
 }
 
 func (b Verbose) Warnln(v ...interface{}) {
 	if b.True {
-		b.logger.Output(WARN, 2, fmt.Sprint(v...))
+		b.logger.output(WARN, 2, nil, v...)
 	}
 }
 
 func (b Verbose) Error(v ...interface{}) {
 	if b.True {
-		b.logger.Output(ERROR, 2, fmt.Sprint(v...))
+		b.logger.output(ERROR, 2, nil, v...)
 	}
 }
 
 func (b Verbose) Errorf(format string, v ...interface{}) {
 	if b.True {
-		b.logger.Output(ERROR, 2, fmt.Sprintf(format, v...))
+		b.logger.output(ERROR, 2, &format, v...)
 	}
 }
 
 func (b Verbose) Errorln(v ...interface{}) {
 	if b.True {
-		b.logger.Output(ERROR, 2, fmt.Sprint(v...))
+		b.logger.output(ERROR, 2, nil, v...)
 	}
 }
 
 func (b Verbose) Critical(v ...interface{}) {
 	if b.True {
-		b.logger.Output(CRITICAL, 2, fmt.Sprint(v...))
+		b.logger.output(CRITICAL, 2, nil, v...)
 	}
 }
 
 func (b Verbose) Criticalf(format string, v ...interface{}) {
 	if b.True {
-		b.logger.Output(CRITICAL, 2, fmt.Sprintf(format, v...))
+		b.logger.output(CRITICAL, 2, &format, v...)
 	}
 }
 
 func (b Verbose) Criticalln(v ...interface{}) {
 	if b.True {
-		b.logger.Output(CRITICAL, 2, fmt.Sprint(v...))
+		b.logger.output(CRITICAL, 2, nil, v...)
 	}
 }
 
 func (b Verbose) Stack(v ...interface{}) {
 	if b.True {
-		b.logger.Output(STACK, 2, fmt.Sprint(v...))
+		b.logger.output(STACK, 2, nil, v...)
 	}
 }
 
 func (b Verbose) Stackf(format string, v ...interface{}) {
 	if b.True {
-		b.logger.Output(STACK, 2, fmt.Sprintf(format, v...))
+		b.logger.output(STACK, 2, &format, v...)
 	}
 }
 
 func (b Verbose) Stackln(v ...interface{}) {
 	if b.True {
-		b.logger.Output(STACK, 2, fmt.Sprint(v...))
+		b.logger.output(STACK, 2, nil, v...)
 	}
 }
 
 func (b Verbose) Log(sev Severity, v ...interface{}) {
 	if b.True {
-		b.logger.Output(sev, 2, fmt.Sprint(v...))
+		b.logger.output(sev, 2, nil, v...)
 	}
 }
 
 func (b Verbose) Print(v ...interface{}) {
 	if b.True {
-		b.logger.Output(DEBUG, 2, fmt.Sprint(v...))
+		b.logger.output(DEBUG, 2, nil, v...)
 	}
 }
 
 func (b Verbose) Printf(format string, v ...interface{}) {
 	if b.True {
-		b.logger.Output(DEBUG, 2, fmt.Sprintf(format, v...))
+		b.logger.output(DEBUG, 2, &format, v...)
 	}
 }
 
 func (b Verbose) Println(v ...interface{}) {
 	if b.True {
-		b.logger.Output(DEBUG, 2, fmt.Sprint(v...))
+		b.logger.output(DEBUG, 2, nil, v...)
 	}
 }
 
 func (b Verbose) Fatal(v ...interface{}) {
 	if b.True {
-		b.logger.Output(FATAL, 2, fmt.Sprint(v...))
+		b.logger.output(FATAL, 2, nil, v...)
 		os.Exit(1)
 	}
 }
 
 func (b Verbose) Fatalf(format string, v ...interface{}) {
 	if b.True {
-		b.logger.Output(FATAL, 2, fmt.Sprintf(format, v...))
+		b.logger.output(FATAL, 2, &format, v...)
 		os.Exit(1)
 	}
 }
 
 func (b Verbose) Fatalln(v ...interface{}) {
 	if b.True {
-		b.logger.Output(FATAL, 2, fmt.Sprint(v...))
+		b.logger.output(FATAL, 2, nil, v...)
 		os.Exit(1)
 	}
 }
 
 func (b Verbose) Panic(v ...interface{}) {
 	if b.True {
-		s := fmt.Sprint(v...)
-		b.logger.Output(PANIC, 2, s)
-		panic(s)
+		b.logger.output(PANIC, 2, nil, v...)
+		panic(fmt.Sprint(v...))
 	}
 }
 
 func (b Verbose) Panicf(format string, v ...interface{}) {
 	if b.True {
-		s := fmt.Sprintf(format, v...)
-		b.logger.Output(PANIC, 2, s)
-		panic(s)
+		b.logger.output(PANIC, 2, &format, v...)
+		panic(fmt.Sprintf(format, v...))
 	}
 }
 
 func (b Verbose) Panicln(v ...interface{}) {
 	if b.True {
-		s := fmt.Sprint(v...)
-		b.logger.Output(PANIC, 2, s)
-		panic(s)
+		b.logger.output(PANIC, 2, nil, v...)
+		panic(fmt.Sprint(v...))
 	}
 }
 
@@ -644,136 +643,133 @@ func V(level Level) Verbose {
 }
 
 func Trace(v ...interface{}) {
-	std.Output(TRACE, 2, fmt.Sprint(v...))
+	std.output(TRACE, 2, nil, v...)
 }
 
 func Tracef(format string, v ...interface{}) {
-	std.Output(TRACE, 2, fmt.Sprintf(format, v...))
+	std.output(TRACE, 2, &format, v...)
 }
 
 func Traceln(v ...interface{}) {
-	std.Output(TRACE, 2, fmt.Sprint(v...))
+	std.output(TRACE, 2, nil, v...)
 }
 
 func Debug(v ...interface{}) {
-	std.Output(DEBUG, 2, fmt.Sprint(v...))
+	std.output(DEBUG, 2, nil, v...)
 }
 
 func Debugf(format string, v ...interface{}) {
-	std.Output(DEBUG, 2, fmt.Sprintf(format, v...))
+	std.output(DEBUG, 2, &format, v...)
 }
 
 func Debugln(v ...interface{}) {
-	std.Output(DEBUG, 2, fmt.Sprint(v...))
+	std.output(DEBUG, 2, nil, v...)
 }
 
 func Info(v ...interface{}) {
-	std.Output(INFO, 2, fmt.Sprint(v...))
+	std.output(INFO, 2, nil, v...)
 }
 
 func Infof(format string, v ...interface{}) {
-	std.Output(INFO, 2, fmt.Sprintf(format, v...))
+	std.output(INFO, 2, &format, v...)
 }
 
 func Infoln(v ...interface{}) {
-	std.Output(INFO, 2, fmt.Sprint(v...))
+	std.output(INFO, 2, nil, v...)
 }
 
 func Warn(v ...interface{}) {
-	std.Output(WARN, 2, fmt.Sprint(v...))
+	std.output(WARN, 2, nil, v...)
 }
 
 func Warnf(format string, v ...interface{}) {
-	std.Output(WARN, 2, fmt.Sprintf(format, v...))
+	std.output(WARN, 2, &format, v...)
 }
 
 func Warnln(v ...interface{}) {
-	std.Output(WARN, 2, fmt.Sprint(v...))
+	std.output(WARN, 2, nil, v...)
 }
 
 func Error(v ...interface{}) {
-	std.Output(ERROR, 2, fmt.Sprint(v...))
+	std.output(ERROR, 2, nil, v...)
 }
 
 func Errorf(format string, v ...interface{}) {
-	std.Output(ERROR, 2, fmt.Sprintf(format, v...))
+	std.output(ERROR, 2, &format, v...)
 }
 
 func Errorln(v ...interface{}) {
-	std.Output(ERROR, 2, fmt.Sprint(v...))
+	std.output(ERROR, 2, nil, v...)
 }
 
 func Critical(v ...interface{}) {
-	std.Output(CRITICAL, 2, fmt.Sprint(v...))
+	std.output(CRITICAL, 2, nil, v...)
 }
 
 func Criticalf(format string, v ...interface{}) {
-	std.Output(CRITICAL, 2, fmt.Sprintf(format, v...))
+	std.output(CRITICAL, 2, &format, v...)
 }
 
 func Criticalln(v ...interface{}) {
-	std.Output(CRITICAL, 2, fmt.Sprint(v...))
+	std.output(CRITICAL, 2, nil, v...)
 }
 
 func Stack(v ...interface{}) {
-	std.Output(STACK, 2, fmt.Sprint(v...))
+	std.output(STACK, 2, nil, v...)
 }
 
 func Stackf(format string, v ...interface{}) {
-	std.Output(STACK, 2, fmt.Sprintf(format, v...))
+	std.output(STACK, 2, &format, v...)
 }
 
 func Stackln(v ...interface{}) {
-	std.Output(STACK, 2, fmt.Sprint(v...))
+	std.output(STACK, 2, nil, v...)
 }
 
 func Log(sev Severity, v ...interface{}) {
-	std.Output(sev, 2, fmt.Sprint(v...))
+	std.output(sev, 2, nil, v...)
 }
 
 func Print(v ...interface{}) {
-	std.Output(DEBUG, 2, fmt.Sprint(v...))
+	std.output(DEBUG, 2, nil, v...)
 }
 
 func Printf(format string, v ...interface{}) {
-	std.Output(DEBUG, 2, fmt.Sprintf(format, v...))
+	std.output(DEBUG, 2, &format, v...)
 }
 
 func Println(v ...interface{}) {
-	std.Output(DEBUG, 2, fmt.Sprint(v...))
+	std.output(DEBUG, 2, nil, v...)
 }
 
 func Fatal(v ...interface{}) {
-	std.Output(FATAL, 2, fmt.Sprint(v...))
+	std.output(FATAL, 2, nil, v...)
 	os.Exit(1)
 }
 
 func Fatalf(format string, v ...interface{}) {
-	std.Output(FATAL, 2, fmt.Sprintf(format, v...))
+	std.output(FATAL, 2, &format, v...)
 	os.Exit(1)
 }
 
 func Fatalln(v ...interface{}) {
-	std.Output(FATAL, 2, fmt.Sprint(v...))
+	std.output(FATAL, 2, nil, v...)
 	os.Exit(1)
 }
 
 func Panic(v ...interface{}) {
-	s := fmt.Sprint(v...)
-	std.Output(PANIC, 2, s)
-	panic(s)
+	std.output(PANIC, 2, nil, v...)
+	panic(fmt.Sprint(v...))
 }
 
 func Panicf(format string, v ...interface{}) {
-	s := fmt.Sprintf(format, v...)
-	std.Output(PANIC, 2, s)
-	panic(s)
+	std.output(PANIC, 2, &format, v...)
+	panic(fmt.Sprintf(format, v...))
 }
 
 func Panicln(v ...interface{}) {
-	s := fmt.Sprint(v...)
-	std.Output(PANIC, 2, s)
-	panic(s)
+	std.output(PANIC, 2, nil, v...)
+	panic(fmt.Sprint(v...))
 }
 
 func init() {

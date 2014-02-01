@@ -2,9 +2,11 @@ package factorlog
 
 import (
 	"bytes"
-	"github.com/mgutz/ansi"
+	"fmt"
 	"path/filepath"
 	"regexp"
+
+	"github.com/mgutz/ansi"
 )
 
 // Can hold 63 flags
@@ -391,10 +393,21 @@ func (f *StdFormatter) Format(context LogContext) []byte {
 				buf.WriteString(p.value)
 			}
 		case vMessage:
-			buf.WriteString(context.Message)
+			if context.Format != nil {
+				buf.WriteString(fmt.Sprintf(*context.Format, context.Args...))
+			} else {
+				buf.WriteString(fmt.Sprint(context.Args...))
+			}
 		case vSafeMessage:
+			message := ""
+			if context.Format != nil {
+				message = fmt.Sprintf(*context.Format, context.Args...)
+			} else {
+				message = fmt.Sprint(context.Args...)
+			}
+
 			f.stmp = f.stmp[:0]
-			l := len(context.Message)
+			l := len(message)
 			ca := cap(f.stmp)
 			if l > ca {
 				f.stmp = make([]byte, 0, l)
@@ -402,7 +415,7 @@ func (f *StdFormatter) Format(context LogContext) []byte {
 				f.stmp = f.stmp[0:0:l]
 			}
 
-			for _, c := range context.Message {
+			for _, c := range message {
 				if int(c) < 32 {
 					f.tmp[0] = '\\'
 					f.tmp[1] = 'x'

@@ -2,9 +2,11 @@ package main
 
 import (
 	"bytes"
-	log "github.com/kdar/factorlog"
+	"fmt"
 	"os"
 	"time"
+
+	log "github.com/kdar/factorlog"
 )
 
 // If you know exactly what your format is going to be, this is really
@@ -51,13 +53,20 @@ func (f *CustomFormatter) Format(context log.LogContext) []byte {
 	// Write what we have thus far in tmp to our buffer
 	buf.Write(f.tmp[:20])
 
+	message := ""
+	if context.Format != nil {
+		message = fmt.Sprintf(*context.Format, context.Args...)
+	} else {
+		message = fmt.Sprint(context.Args...)
+	}
+
 	// Write the message to our buffer
-	buf.WriteString(context.Message)
+	buf.WriteString(message)
 
 	// If we don't have a newline, put one. All formatters must
 	// do this.
-	l := len(context.Message)
-	if l > 0 && context.Message[l-1] != '\n' {
+	l := len(message)
+	if l > 0 && message[l-1] != '\n' {
 		buf.WriteRune('\n')
 	}
 
