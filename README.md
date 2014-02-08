@@ -3,6 +3,8 @@ FactorLog
 
 FactorLog is a fast logging infrastructure for Go that provides numerous logging functions for whatever your style may be. It could easily be a replacement for Go's log in the standard library (though it doesn't support functions such as `SetFlags()`).
 
+It has a modular formatter interface, and even have a GELF and glog formatter in the [contrib](https://github.com/kdar/factorlog-contrib). 
+
 Documentation here: [http://godoc.org/github.com/kdar/factorlog](http://godoc.org/github.com/kdar/factorlog)
 
 ![factorlog](http://puu.sh/6jPEt.png "FactorLog")
@@ -10,8 +12,8 @@ Documentation here: [http://godoc.org/github.com/kdar/factorlog](http://godoc.or
 ## Features
 
 - Various log severities: TRACE, DEBUG, INFO, WARN, ERROR, CRITICAL, STACK, FATAL, PANIC
-- Configurable, formattable logger.
-- Modular formatter. Care about speed? Use GlogFormatter or roll your own.
+- Configurable, formattable logger. Check [factorlog-contrib](https://github.com/kdar/factorlog-contrib) for examples.
+- Modular formatter. Care about speed? Use [GlogFormatter](https://github.com/kdar/factorlog-contrib/tree/master/glog) or roll your own.
 - Designed with speed in mind (it's really fast).
 - Many logging functions to fit your style of logging. (Trace, Tracef, Traceln, etc...)
 - Supports colors.
