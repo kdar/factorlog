@@ -50,8 +50,8 @@ const (
 )
 
 var (
-	maxint32 = ^uint(0) >> 1
-	//maxuint32 = ^uint(0)
+	maxint32 = ^uint32(0) >> 1
+	//maxuint32 = ^uint32(0)
 	//maxint64 = ^uint64(0) >> 1
 	//maxuint64 = ^uint64(0)
 )
