@@ -262,3 +262,32 @@ func I64toa(buf *[]byte, i int, d int64) int {
 
 	return copy((*buf)[i:], (*buf)[j:])
 }
+
+// Ui64toa is the same as itoa but for 64bit unsigned integers
+func Ui64toa(buf *[]byte, i int, d uint64) int {
+	j := len(*buf)
+
+	for d >= 100 {
+		// Integer division is slow, so we do it by 2
+		index := (d % 100) * 2
+		d /= 100
+		j--
+		(*buf)[j] = ddigits[index+1]
+		j--
+		(*buf)[j] = ddigits[index]
+	}
+
+	if d < 10 {
+		j--
+		(*buf)[j] = byte(uint64('0') + d)
+		return copy((*buf)[i:], (*buf)[j:])
+	}
+
+	index := d * 2
+	j--
+	(*buf)[j] = ddigits[index+1]
+	j--
+	(*buf)[j] = ddigits[index]
+
+	return copy((*buf)[i:], (*buf)[j:])
+}
