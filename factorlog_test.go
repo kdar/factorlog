@@ -3,6 +3,8 @@ package factorlog
 import (
 	"bytes"
 	"log"
+	"regexp"
+	"strings"
 	"testing"
 )
 
@@ -41,6 +43,24 @@ func TestLog(t *testing.T) {
 		if !bytes.Equal(tt.out, buf.Bytes()) {
 			t.Fatalf("\nexpected: %#v\ngot:      %#v", string(tt.out), buf.String())
 		}
+	}
+}
+
+func TestOutputStack(t *testing.T) {
+	r := regexp.MustCompile(`[\t\s]+.*?: f.output\(STACK, 1, nil, "hellothere"\)`)
+	buf := &bytes.Buffer{}
+	f := New(buf, NewStdFormatter("%{Message}"))
+
+	f.output(STACK, 1, nil, "hellothere")
+	lines := strings.Split(buf.String(), "\n")
+	if len(lines) < 3 {
+		t.Fatalf("expected stack trace to be at least 3 lines")
+	}
+	if lines[0] != "hellothere" {
+		t.Fatalf("expected first line of Stack to be 'hellothere'")
+	}
+	if !r.MatchString(lines[2]) {
+		t.Fatalf("regexp `%s` didn't match `%s`", r.String(), lines[2])
 	}
 }
 
