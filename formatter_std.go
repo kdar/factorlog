@@ -3,11 +3,12 @@ package factorlog
 import (
 	"bytes"
 	"fmt"
-	"path/filepath"
 	"regexp"
 
 	"github.com/mgutz/ansi"
 )
+
+const pathSeparator = '/'
 
 // Can hold 63 flags
 type fmtVerb uint64
@@ -339,7 +340,7 @@ func (f *StdFormatter) Format(context LogContext) []byte {
 			} else {
 				slash := len(file) - 1
 				for ; slash >= 0; slash-- {
-					if file[slash] == filepath.Separator {
+					if file[slash] == pathSeparator {
 						break
 					}
 				}
@@ -362,7 +363,7 @@ func (f *StdFormatter) Format(context LogContext) []byte {
 			fun := context.Function
 			slash := len(fun) - 1
 			for ; slash >= 0; slash-- {
-				if fun[slash] == filepath.Separator {
+				if fun[slash] == pathSeparator {
 					break
 				}
 			}
@@ -377,7 +378,7 @@ func (f *StdFormatter) Format(context LogContext) []byte {
 			slash := len(fun) - 1
 			lastDot := -1
 			for ; slash >= 0; slash-- {
-				if fun[slash] == filepath.Separator {
+				if fun[slash] == pathSeparator {
 					break
 				} else if fun[slash] == '.' {
 					lastDot = slash

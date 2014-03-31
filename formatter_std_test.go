@@ -8,7 +8,7 @@ import (
 var fmtTestsContext = LogContext{
 	Time:     time.Unix(0, 1389223634123456789),
 	Severity: PANIC,
-	File:     "/path/to/testing.go",
+	File:     "path/to/testing.go",
 	Line:     391,
 	Format:   nil,
 	Args:     []interface{}{"hello there!"},
@@ -114,7 +114,7 @@ var std2FmtTests = []struct {
 	{
 		fmtTestsContext,
 		"%{FullFile}",
-		"/path/to/testing.go\n",
+		"path/to/testing.go\n",
 	},
 	{
 		fmtTestsContext,
@@ -134,7 +134,7 @@ var std2FmtTests = []struct {
 	{
 		fmtTestsContext,
 		"%{FullFunction}",
-		"some crazy/path.path/pkg.(*Type).Function\n",
+		"some crazy/path.path/pkg.(*Type).Function" + "\n",
 	},
 	{
 		fmtTestsContext,
