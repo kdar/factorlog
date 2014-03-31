@@ -137,7 +137,7 @@ func TestSeverities(t *testing.T) {
 // Ensure `std`'s format is correct.
 func TestStdFormat(t *testing.T) {
 	output := std.formatter.Format(fmtTestsContext)
-	expect := "2014-01-08 18:27:14 hello there!\n"
+	expect := "2014-01-08 23:27:14 hello there!\n"
 	if string(output) != expect {
 		t.Fatalf("\nexpected: %#v\ngot:      %#v", expect, string(output))
 	}

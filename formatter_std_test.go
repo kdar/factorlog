@@ -6,7 +6,7 @@ import (
 )
 
 var fmtTestsContext = LogContext{
-	Time:     time.Unix(0, 1389223634123456789),
+	Time:     time.Unix(0, 1389223634123456789).In(time.UTC),
 	Severity: PANIC,
 	File:     "path/to/testing.go",
 	Line:     391,
@@ -74,12 +74,12 @@ var std2FmtTests = []struct {
 	{
 		fmtTestsContext,
 		"%{Time}",
-		"18:27:14\n",
+		"23:27:14\n",
 	},
 	{
 		fmtTestsContext,
 		`%{Time "15:04:05"}`,
-		"18:27:14\n",
+		"23:27:14\n",
 	},
 	{
 		fmtTestsContext,
@@ -89,17 +89,17 @@ var std2FmtTests = []struct {
 	{
 		fmtTestsContext,
 		`%{Time "15:04:05.000"}`,
-		"18:27:14.123\n",
+		"23:27:14.123\n",
 	},
 	{
 		fmtTestsContext,
 		`%{Time "15:04:05.000000"}`,
-		"18:27:14.123456\n",
+		"23:27:14.123456\n",
 	},
 	{
 		fmtTestsContext,
 		`%{Time "15:04:05.000000000"}`,
-		"18:27:14.123456789\n",
+		"23:27:14.123456789\n",
 	},
 	{
 		fmtTestsContext,
@@ -234,7 +234,7 @@ var std2FmtTests = []struct {
 	{
 		fmtTestsContext,
 		"hey%{Date}%{Time}there",
-		"hey2014-01-0818:27:14there\n",
+		"hey2014-01-0823:27:14there\n",
 	},
 	{
 		LogContext{Args: []interface{}{"hey\x08\x08\x08there"}},
