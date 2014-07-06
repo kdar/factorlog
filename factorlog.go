@@ -203,11 +203,18 @@ func (l *FactorLog) output(sev Severity, calldepth int, format *string, v ...int
 	return err
 }
 
-// SetOutput sets the output destination for thislogger.
+// SetOutput sets the output destination for this logger.
 func (l *FactorLog) SetOutput(w io.Writer) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 	l.out = w
+}
+
+// SetFormatter sets the formatter for this logger.
+func (l *FactorLog) SetFormatter(f Formatter) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	l.formatter = f
 }
 
 // IsV tests whether the verbosity is of a certain level.
@@ -621,6 +628,13 @@ func SetOutput(w io.Writer) {
 	std.mu.Lock()
 	defer std.mu.Unlock()
 	std.out = w
+}
+
+// SetFormatter sets the formatter for the standard logger.
+func SetFormatter(f Formatter) {
+	std.mu.Lock()
+	defer std.mu.Unlock()
+	std.formatter = f
 }
 
 func SetVerbosity(level Level) {

@@ -46,6 +46,44 @@ func TestLog(t *testing.T) {
 	}
 }
 
+func TestSetOutput(t *testing.T) {
+	str := "hey\n"
+
+	buf1 := &bytes.Buffer{}
+	l := New(buf1, NewStdFormatter("%{Message}"))
+	buf2 := &bytes.Buffer{}
+	l.SetOutput(buf2)
+	l.Print(str)
+
+	if buf1.Len() > 0 {
+		t.Fatal("the first buffer is suppose to be empty, but it's not")
+	}
+
+	if str != buf2.String() {
+		t.Fatalf("\nexpected: %#v\ngot:      %#v", str, buf2.String())
+	}
+}
+
+func TestSetFormatter(t *testing.T) {
+	buf := &bytes.Buffer{}
+	l := New(buf, NewStdFormatter("%{Message}"))
+	f := NewStdFormatter("2 %{Message}")
+
+	l.Print("hey")
+
+	if buf.String() != "hey\n" {
+		t.Fatalf("\nexpected: %#v\ngot:      %#v", "hey\n", buf.String())
+	}
+
+	buf.Reset()
+	l.SetFormatter(f)
+	l.Print("hey")
+
+	if buf.String() != "2 hey\n" {
+		t.Fatalf("\nexpected: %#v\ngot:      %#v", "2 hey\n", buf.String())
+	}
+}
+
 func TestOutputStack(t *testing.T) {
 	r := regexp.MustCompile(`[\t\s]+.*?: f.output\(STACK, 1, nil, "hellothere"\)`)
 	buf := &bytes.Buffer{}
