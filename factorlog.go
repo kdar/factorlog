@@ -81,6 +81,11 @@ type Logger interface {
 	Stackln(v ...interface{})
 	Log(sev Severity, v ...interface{})
 
+	//Log verbosity
+	V(level Level) Verbose
+	SetVerbosity(level Level)
+	IsV(level Level) bool
+
 	// golang's log interface
 	Print(v ...interface{})
 	Printf(format string, v ...interface{})
@@ -834,3 +839,6 @@ func (NullLogger) Fatalln(v ...interface{})                                   {}
 func (NullLogger) Panic(v ...interface{})                                     {}
 func (NullLogger) Panicf(format string, v ...interface{})                     {}
 func (NullLogger) Panicln(v ...interface{})                                   {}
+func (NullLogger) V(level Level) Verbose                                      { return Verbose{} }
+func (NullLogger) SetVerbosity(level Level)                                   {}
+func (NullLogger) IsV(level Level) bool                                       { return false }
