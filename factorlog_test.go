@@ -118,6 +118,39 @@ func TestVerbosity(t *testing.T) {
 	if buf.Len() == 0 {
 		t.Fatal("Verbosity set to 4, Info() called with verbosity of 3. We should have got a log.")
 	}
+
+}
+
+//these methods have to be implemented for a Verbose{} to satisfy a Logger interface
+//You really should not be using it like this
+func TestChainedVerbosity(t *testing.T) {
+	buf := &bytes.Buffer{}
+	f := New(buf, NewStdFormatter("%{Message}"))
+	//the V() calls here shouldnt do anything
+	f.V(8).V(6).SetVerbosity(5)
+	if f.IsV(5) != true {
+		t.Fatal("Set verbosity to 5 through a chained V() call, but it was not actually set")
+
+	}
+	f.SetVerbosity(1)
+	if f.V(1234).V(51234).IsV(1) != true {
+		t.Fatal("Set verbosity to 1, checked it through a chained V() call, should still be 1")
+
+	}
+
+	f.SetVerbosity(2)
+	f.V(8).V(3).Info("should not appear")
+	if buf.Len() > 0 {
+		t.Fatal("Verbosity set to 3, Info() called with verbosity of 8 then changed to3. Yet, we still got a log.")
+	}
+
+	buf.Reset()
+	f.SetVerbosity(4)
+	f.V(1000).V(3).Info("should appear")
+	if buf.Len() == 0 {
+		t.Fatal("Verbosity set to 4, Info() called with verbosity of 100 then changed to 3. We should have got a log.")
+	}
+
 }
 
 type sevTestType int

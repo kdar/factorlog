@@ -625,6 +625,26 @@ func (b Verbose) Panicln(v ...interface{}) {
 	}
 }
 
+func (b Verbose) IsV(level Level) bool {
+	if b.logger.verbosity.get() >= level {
+		return true
+	}
+
+	return false
+}
+
+func (b Verbose) V(level Level) Verbose {
+	if b.logger.verbosity.get() >= level {
+		return Verbose{true, b.logger}
+	}
+
+	return Verbose{false, b.logger}
+}
+
+func (b Verbose) SetVerbosity(level Level) {
+	b.logger.SetVerbosity(level)
+}
+
 // Global functions for the package. Uses a standard
 // logger just like Go's log package.
 
