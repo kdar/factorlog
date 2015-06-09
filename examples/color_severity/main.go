@@ -1,8 +1,9 @@
 package main
 
 import (
-	"github.com/kdar/factorlog"
 	"os"
+
+	"github.com/kdar/factorlog"
 )
 
 func main() {

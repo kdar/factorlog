@@ -145,6 +145,10 @@ type Formatter interface {
 	ShouldRuntimeCaller() bool
 }
 
+// Fields is a type that represents a key-value set of fields
+// that can be logged.
+type Fields map[string]interface{}
+
 // Structure used to hold the data used for formatting
 type LogContext struct {
 	Time     time.Time
@@ -154,6 +158,7 @@ type LogContext struct {
 	Function string
 	Pid      int
 	Format   *string
+	Fields   Fields
 	Args     []interface{}
 }
 

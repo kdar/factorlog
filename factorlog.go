@@ -80,6 +80,8 @@ type Logger interface {
 	Stackf(format string, v ...interface{})
 	Stackln(v ...interface{})
 	Log(sev Severity, v ...interface{})
+	WithField(key string, value interface{}) Logger
+	WithFields(fields Fields) Logger
 
 	//Log verbosity
 	V(level Level) Verbose
@@ -106,6 +108,7 @@ type FactorLog struct {
 	formatter  Formatter
 	verbosity  Level
 	severities Severity
+	fields     Fields
 }
 
 // New creates a FactorLog with the given output and format.
@@ -174,6 +177,7 @@ func (l *FactorLog) output(sev Severity, calldepth int, format *string, v ...int
 		Severity: sev,
 		Pid:      pid,
 		Format:   format,
+		Fields:   l.fields,
 		Args:     v,
 	}
 
@@ -362,6 +366,24 @@ func (l *FactorLog) Stackln(v ...interface{}) {
 // Log calls l.output to print to the logger. Uses fmt.Sprint.
 func (l *FactorLog) Log(sev Severity, v ...interface{}) {
 	l.output(sev, 2, nil, v...)
+}
+
+func (l *FactorLog) WithField(key string, value interface{}) Logger {
+	return l.WithFields(Fields{
+		key: value,
+	})
+}
+
+func (l *FactorLog) WithFields(fields Fields) Logger {
+	l2 := &FactorLog{
+		out:        l.out,
+		formatter:  l.formatter,
+		verbosity:  l.verbosity,
+		severities: l.severities,
+		fields:     fields,
+	}
+
+	return l2
 }
 
 // Print calls l.output to print to the logger. Uses fmt.Sprint.
@@ -563,6 +585,24 @@ func (b Verbose) Log(sev Severity, v ...interface{}) {
 	if b.True {
 		b.logger.output(sev, 2, nil, v...)
 	}
+}
+
+func (b Verbose) WithField(key string, value interface{}) Logger {
+	return b.WithFields(Fields{
+		key: value,
+	})
+}
+
+func (b Verbose) WithFields(fields Fields) Logger {
+	l2 := &FactorLog{
+		out:        b.logger.out,
+		formatter:  b.logger.formatter,
+		verbosity:  b.logger.verbosity,
+		severities: b.logger.severities,
+		fields:     fields,
+	}
+
+	return l2
 }
 
 func (b Verbose) Print(v ...interface{}) {
@@ -778,6 +818,24 @@ func Log(sev Severity, v ...interface{}) {
 	std.output(sev, 2, nil, v...)
 }
 
+func WithField(key string, value interface{}) Logger {
+	return WithFields(Fields{
+		key: value,
+	})
+}
+
+func WithFields(fields Fields) Logger {
+	l2 := &FactorLog{
+		out:        std.out,
+		formatter:  std.formatter,
+		verbosity:  std.verbosity,
+		severities: std.severities,
+		fields:     fields,
+	}
+
+	return l2
+}
+
 func Print(v ...interface{}) {
 	std.output(DEBUG, 2, nil, v...)
 }
@@ -850,6 +908,8 @@ func (NullLogger) Stack(v ...interface{})                                     {}
 func (NullLogger) Stackf(format string, v ...interface{})                     {}
 func (NullLogger) Stackln(v ...interface{})                                   {}
 func (NullLogger) Log(sev Severity, v ...interface{})                         {}
+func (l NullLogger) WithField(key string, value interface{}) Logger           { return l }
+func (l NullLogger) WithFields(fields Fields) Logger                          { return l }
 func (NullLogger) Print(v ...interface{})                                     {}
 func (NullLogger) Printf(format string, v ...interface{})                     {}
 func (NullLogger) Println(v ...interface{})                                   {}

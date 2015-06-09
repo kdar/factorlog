@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"regexp"
+	"strings"
 
 	"github.com/mgutz/ansi"
 )
@@ -37,6 +38,7 @@ const (
 	vColor
 	vMessage
 	vSafeMessage
+	vFields
 )
 
 const (
@@ -57,11 +59,14 @@ const (
 	fTime_StampMilli
 	fTime_StampMicro
 	fTime_StampNano
+
+	fFields_Default  = 0
+	fFields_Provided = 1 << iota
 )
 
 var (
 	formatRe = regexp.MustCompile(`%{([A-Za-z]+)(?:\s(.*?))?}`)
-	argsRe   = regexp.MustCompile(`(?:"(.*?)")`)
+	argsRe   = regexp.MustCompile("(?:[\"`](.*?)[\"`])")
 	verbMap  = map[string]fmtVerb{
 		"SEVERITY":     vSEVERITY,
 		"Severity":     vSeverity,
@@ -85,6 +90,7 @@ var (
 		"Color":        vColor,
 		"Message":      vMessage,
 		"SafeMessage":  vSafeMessage,
+		"Fields":       vFields,
 	}
 	timeMap = map[string]int{
 		"15:04:05":           fTime_Default,
@@ -147,6 +153,8 @@ type StdFormatter struct {
 //   %{Message} - The message.
 //   %{SafeMessage} - Safe message. It will escape any character below ASCII 32. This helps prevent
 //                    attacks like using 0x08 to backspace log entries.
+//   %{Fields "[fmt]"} - The Fields passed to the logger object. The default format
+//                       is " %k=%v".
 func NewStdFormatter(frmt string) *StdFormatter {
 	f := &StdFormatter{
 		frmt: frmt,
@@ -427,6 +435,21 @@ func (f *StdFormatter) Format(context LogContext) []byte {
 				}
 			}
 			buf.Write(f.stmp)
+		case vFields:
+			if len(p.args) > 0 {
+				for k, v := range context.Fields {
+					s := strings.Replace(p.args[0], "%k", k, -1)
+					s = strings.Replace(s, "%v", fmt.Sprintf("%v", v), -1)
+					buf.WriteString(s)
+				}
+			} else {
+				for k, v := range context.Fields {
+					buf.WriteString(" ")
+					buf.WriteString(k)
+					buf.WriteString("=")
+					buf.WriteString(fmt.Sprintf("%v", v))
+				}
+			}
 		}
 	}
 

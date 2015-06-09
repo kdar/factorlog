@@ -11,6 +11,7 @@ var fmtTestsContext = LogContext{
 	File:     "path/to/testing.go",
 	Line:     391,
 	Format:   nil,
+	Fields:   Fields{"var": "string", "count": 6.4},
 	Args:     []interface{}{"hello there!"},
 	Function: "some crazy/path.path/pkg.(*Type).Function",
 	Pid:      1234,
@@ -240,6 +241,16 @@ var std2FmtTests = []struct {
 		LogContext{Args: []interface{}{"hey\x08\x08\x08there"}},
 		"%{SafeMessage}",
 		"hey\\x08\\x08\\x08there\n",
+	},
+	{
+		fmtTestsContext,
+		"%{Fields}",
+		" var=string count=6.4\n",
+	},
+	{
+		fmtTestsContext,
+		`%{Fields " [Key='%k', Value='%v']"}`,
+		" [Key='var', Value='string'] [Key='count', Value='6.4']\n",
 	},
 }
 
