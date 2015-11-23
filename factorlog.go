@@ -375,6 +375,10 @@ func (l *FactorLog) WithField(key string, value interface{}) Logger {
 }
 
 func (l *FactorLog) WithFields(fields Fields) Logger {
+	for k, v := range l.fields {
+		fields[k] = v
+	}
+
 	l2 := &FactorLog{
 		out:        l.out,
 		formatter:  l.formatter,
@@ -594,6 +598,10 @@ func (b Verbose) WithField(key string, value interface{}) Logger {
 }
 
 func (b Verbose) WithFields(fields Fields) Logger {
+	for k, v := range b.logger.fields {
+		fields[k] = v
+	}
+
 	l2 := &FactorLog{
 		out:        b.logger.out,
 		formatter:  b.logger.formatter,
