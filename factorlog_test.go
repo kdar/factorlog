@@ -2,7 +2,9 @@ package factorlog
 
 import (
 	"bytes"
+	"fmt"
 	"log"
+	"os"
 	"regexp"
 	"strings"
 	"testing"
@@ -23,9 +25,9 @@ var logTests = []struct {
 }{
 	{
 		// we can't use every verb here, because the test will fail
-		"%{FullFunction} [%{SEVERITY}:%{SEV}:%{File}:%{ShortFile}] %%{Message}%",
+		"%{FullFunction} [%{SEVERITY}:%{SEV}:%{File}:%{ShortFile}:%{Pid}] %%{Message}%",
 		"hello there!",
-		[]byte("github.com/kdar/factorlog.TestLog [ERROR:EROR:factorlog_test.go:factorlog_test] %hello there!%\n"),
+		[]byte("github.com/kdar/factorlog.TestLog [ERROR:EROR:factorlog_test.go:factorlog_test" + fmt.Sprintf("%d", os.Getpid()) + "] %hello there!%\n"),
 	},
 	{
 		"%{Message} %{File}",

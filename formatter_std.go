@@ -31,6 +31,7 @@ const (
 	vFile
 	vShortFile
 	vLine
+	vPid
 	vFullFunction
 	vPkgFunction
 	vFunction
@@ -79,6 +80,7 @@ var (
 		"File":         vFile,
 		"ShortFile":    vShortFile,
 		"Line":         vLine,
+		"Pid":          vPid,
 		"FullFunction": vFullFunction,
 		"PkgFunction":  vPkgFunction,
 		"Function":     vFunction,
@@ -330,6 +332,9 @@ func (f *StdFormatter) Format(context LogContext) []byte {
 			buf.Write(f.tmp[:n])
 		case vUnixNano:
 			n := I64toa(&f.tmp, 0, context.Time.UnixNano())
+			buf.Write(f.tmp[:n])
+		case vPid:
+			n := Itoa(&f.tmp, 0, context.Pid)
 			buf.Write(f.tmp[:n])
 		case vFullFile:
 			buf.WriteString(context.File)
