@@ -43,6 +43,7 @@
 //                     Optimized formats: 2006/01/02, 15:04:05.000, 15:04:05.000000, 15:04:05.000000000
 //   %{Unix} - Returns the number of seconds elapsed since January 1, 1970 UTC.
 //   %{UnixNano} - Returns the number of nanoseconds elapsed since January 1, 1970 UTC.
+//   %{Pid} - Process ID of current process.
 //   %{FullFile} - Full source file path (e.g. /dev/project/file.go).
 //   %{File} - The source file name (e.g. file.go).
 //   %{ShortFile} - The short source file name (file without .go).
